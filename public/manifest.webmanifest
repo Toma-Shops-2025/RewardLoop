@@ -1,0 +1,11 @@
+{
+  "name": "RewardLoop",
+  "short_name": "RewardLoop",
+  "description": "Gamified engagement platform — complete missions, play games, and earn reward points.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait",
+  "categories": ["entertainment", "games", "lifestyle"]
+}

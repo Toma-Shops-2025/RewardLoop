@@ -1,0 +1,247 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-pill: 9999px;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-onbrand: var(--brand-foreground);
+  --color-dark: var(--dark);
+  --color-dark-card: var(--dark-card);
+  --color-foreground-on-dark: var(--foreground-on-dark);
+}
+
+:root {
+  --radius: 0.875rem;
+
+  /* RewardLoop brand palette */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.18 0.02 260);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.02 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 260);
+
+  /* Black primary like the login button */
+  --primary: oklch(0.18 0.02 260);
+  --primary-foreground: oklch(0.99 0 0);
+
+  --secondary: oklch(0.97 0.01 80);
+  --secondary-foreground: oklch(0.18 0.02 260);
+
+  --muted: oklch(0.97 0.005 260);
+  --muted-foreground: oklch(0.5 0.02 260);
+
+  --accent: oklch(0.96 0.04 80);
+  --accent-foreground: oklch(0.18 0.02 260);
+
+  --destructive: oklch(0.6 0.23 27);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --success: oklch(0.7 0.18 145);
+  --success-foreground: oklch(0.99 0 0);
+
+  --warning: oklch(0.85 0.18 90);
+  --warning-foreground: oklch(0.2 0.02 260);
+
+  /* Brand orange */
+  --brand: oklch(0.78 0.17 60);
+  --brand-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.92 0.01 260);
+  --input: oklch(0.92 0.01 260);
+  --ring: oklch(0.78 0.17 60);
+
+  --dark: oklch(0.13 0.005 260);
+  --dark-card: oklch(0.18 0.008 260);
+  --foreground-on-dark: oklch(0.98 0 0);
+
+  --gradient-brand: linear-gradient(180deg, oklch(0.82 0.18 65) 0%, oklch(0.74 0.18 55) 100%);
+  --gradient-happy: linear-gradient(135deg, oklch(0.88 0.18 95) 0%, oklch(0.78 0.17 60) 100%);
+  --shadow-brand: 0 10px 30px -10px oklch(0.74 0.18 55 / 0.4);
+  --shadow-card: 0 4px 16px -4px oklch(0.2 0.02 260 / 0.08);
+}
+
+.dark {
+  --background: oklch(0.18 0.02 260);
+  --foreground: oklch(0.99 0 0);
+  --card: oklch(0.22 0.02 260);
+  --card-foreground: oklch(0.99 0 0);
+  --popover: oklch(0.22 0.02 260);
+  --popover-foreground: oklch(0.99 0 0);
+  --primary: oklch(0.99 0 0);
+  --primary-foreground: oklch(0.18 0.02 260);
+  --secondary: oklch(0.28 0.02 260);
+  --secondary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.28 0.02 260);
+  --muted-foreground: oklch(0.7 0.02 260);
+  --accent: oklch(0.28 0.02 260);
+  --accent-foreground: oklch(0.99 0 0);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    -webkit-tap-highlight-color: transparent;
+  }
+  html, body, #root { height: 100%; }
+}
+
+@layer components {
+  .brand-bg { background: var(--gradient-brand); }
+  .happy-bg { background: var(--gradient-happy); }
+  .brand-shadow { box-shadow: var(--shadow-brand); }
+  .card-shadow { box-shadow: var(--shadow-card); }
+  .brand-header {
+    background: var(--brand);
+    border-bottom-left-radius: 50% 24px;
+    border-bottom-right-radius: 50% 24px;
+  }
+  .pill-btn {
+    border-radius: 9999px;
+    padding: 0.95rem 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  }
+  .pill-btn:active { transform: scale(0.98); }
+  .dark-world-bg {
+    background-image:
+      radial-gradient(circle at 1px 1px, oklch(1 0 0 / 0.08) 1px, transparent 0);
+    background-size: 14px 14px;
+  }
+
+  /* Streak flame pulse */
+  .flame-pulse {
+    animation: flame-pulse 1.6s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px oklch(0.85 0.2 60 / 0.6));
+  }
+  @keyframes flame-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+
+  /* Skeleton shimmer */
+  .shimmer {
+    background: linear-gradient(90deg, var(--muted) 0%, oklch(0.94 0.005 260) 50%, var(--muted) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Reward pop */
+  .reward-pop { animation: reward-pop 0.55s cubic-bezier(.2,.9,.3,1.4) both; }
+  @keyframes reward-pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    60% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); }
+  }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    top: -10px;
+    width: 9px;
+    height: 14px;
+    will-change: transform, opacity;
+    pointer-events: none;
+    z-index: 9999;
+    animation: confetti-fall 2.4s cubic-bezier(.2,.6,.4,1) forwards;
+  }
+  @keyframes confetti-fall {
+    0% { transform: translate3d(0,-10px,0) rotate(0deg); opacity: 1; }
+    100% { transform: translate3d(var(--dx, 0), 110vh, 0) rotate(720deg); opacity: 0; }
+  }
+
+  /* Rarity badges */
+  .badge-common { background: oklch(0.92 0.01 260); color: oklch(0.35 0.02 260); }
+  .badge-rare { background: oklch(0.92 0.1 230); color: oklch(0.35 0.1 240); }
+  .badge-bonus { background: var(--gradient-happy); color: var(--brand-foreground); }
+
+  /* Tap Dash target */
+  .td-target {
+    position: absolute;
+    border-radius: 9999px;
+    background: var(--gradient-brand);
+    box-shadow: 0 0 24px oklch(0.78 0.17 60 / 0.6), inset 0 0 0 3px oklch(1 0 0 / 0.85);
+    will-change: transform, opacity;
+    animation: td-pop 0.18s ease-out both;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  .td-target.honeypot {
+    background: oklch(0.45 0.02 260);
+    box-shadow: 0 0 12px oklch(0 0 0 / 0.2);
+  }
+  .td-target.dying { animation: td-die 0.25s ease-in forwards; }
+  @keyframes td-pop {
+    0% { transform: scale(0.4); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes td-die {
+    to { transform: scale(0.6); opacity: 0; }
+  }
+
+  .td-floater {
+    position: absolute;
+    pointer-events: none;
+    font-weight: 800;
+    color: var(--brand);
+    text-shadow: 0 1px 0 oklch(1 0 0 / 0.8);
+    animation: td-float 0.7s ease-out forwards;
+  }
+  @keyframes td-float {
+    0% { transform: translate(-50%, 0); opacity: 1; }
+    100% { transform: translate(-50%, -40px); opacity: 0; }
+  }
+
+  /* Page fade */
+  .page-fade { animation: page-fade 0.25s ease-out both; }
+  @keyframes page-fade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}

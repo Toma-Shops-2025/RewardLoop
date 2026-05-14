@@ -1,0 +1,7 @@
+# RewardLoop app-ads.txt
+# Required by Google AdMob to authorize sellers of this app's inventory.
+# Replace ca-pub-XXXXXXXXXXXXXXXX with your real AdMob publisher ID before
+# submitting the app to the Play Store / linking AdMob.
+# Docs: https://support.google.com/admob/answer/9363762
+
+google.com, pub-7552743356249250, DIRECT, f08c47fec0942fa0

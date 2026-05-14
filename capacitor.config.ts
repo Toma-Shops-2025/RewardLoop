@@ -3,7 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "app.rewardloop",
   appName: "RewardLoop",
-  webDir: "dist",
+  webDir: "dist/client",
   plugins: {
     AdMob: {
       // RewardLoop AdMob App ID — Android

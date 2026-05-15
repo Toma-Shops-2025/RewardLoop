@@ -11,7 +11,6 @@ import { fireConfetti } from "@/lib/confetti";
 export const Route = createFileRoute("/app/spin")({ component: Spin });
 
 const SEGMENTS = [5, 10, 25, 50, 15, 100, 20, 75];
-const COLORS = ["#fb923c", "#fbbf24", "#f97316", "#fcd34d", "#fb923c", "#fbbf24", "#f97316", "#fcd34d"];
 const COOLDOWN_SEC = 8;
 
 function Spin() {

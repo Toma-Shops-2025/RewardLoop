@@ -3,7 +3,7 @@
 // requires one as the WebView entry point. We resolve TanStack Start's client
 // bootstrap chunk from whichever build artifact is available and produce a
 // minimal HTML document that the app can hydrate from `document`.
-import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(process.cwd(), "dist/client");
@@ -78,7 +78,7 @@ function readClientEntryFromServerAsset() {
   if (!manifestAsset) return undefined;
 
   const source = readFileSync(resolve(serverAssetsDir, manifestAsset), "utf8");
-  const match = source.match(/clientEntry\s*:\s*["']([^"']+)["']/);
+  const match = source.match(/["']?clientEntry["']?\s*:\s*["']([^"']+)["']/);
   return normalizeEntryPath(match?.[1]);
 }
 
@@ -87,10 +87,24 @@ function inferClientEntryFromAssets() {
 
   const candidates = readdirSync(clientAssetsDir)
     .filter((file) => /^index-.*\.js$/.test(file))
-    .sort((a, b) => b.localeCompare(a));
+    .map((file) => ({
+      file,
+      size: statSync(resolve(clientAssetsDir, file)).size,
+    }))
+    .sort((a, b) => b.size - a.size);
 
-  const preferred = candidates.find((file) => !file.includes("route") && !file.includes("legal"));
-  return preferred ? `assets/${preferred}` : undefined;
+  const preferred = candidates.find(({ file }) => !file.includes("route") && !file.includes("legal"));
+  return preferred ? `assets/${preferred.file}` : undefined;
+}
+
+function inferStylesheetsFromAssets() {
+  if (!existsSync(clientAssetsDir)) return [];
+
+  const cssFiles = readdirSync(clientAssetsDir).filter((file) => file.endsWith(".css"));
+  const preferred = cssFiles.filter((file) => /^styles-.*\.css$/.test(file));
+  const selected = preferred.length > 0 ? preferred : cssFiles;
+
+  return selected.sort().map((file) => `assets/${file}`);
 }
 
 const entryFile =
@@ -101,7 +115,8 @@ if (!entryFile) {
   process.exit(1);
 }
 
-const cssLinks = []
+const cssLinks = inferStylesheetsFromAssets()
+  .map((href) => `    <link rel="stylesheet" href="/${href}" />`)
   .join("\n");
 
 const html = `<!doctype html>

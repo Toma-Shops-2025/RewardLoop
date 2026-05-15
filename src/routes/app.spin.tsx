@@ -65,7 +65,7 @@ function Spin() {
 
   const seg = 360 / SEGMENTS.length;
   const disabled = spinning || cooldown > 0;
-  const radius = 130; // px from center for label placement (wheel ~288px)
+  const radius = 92; // px from center for label placement (wheel ~288px, inner ~272px)
 
   return (
     <div className="bg-background min-h-full pb-12">

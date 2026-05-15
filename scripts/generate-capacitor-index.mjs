@@ -13,15 +13,7 @@ const manifestCandidates = [
 ];
 
 const manifestPath = manifestCandidates.find((candidate) => existsSync(candidate));
-
-if (!manifestPath) {
-  console.error(
-    "[capacitor-index] No build manifest found in dist/client or dist/server — run `vite build` first.",
-  );
-  process.exit(1);
-}
-
-const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+const manifest = manifestPath ? JSON.parse(readFileSync(manifestPath, "utf8")) : {};
 const clientAssetsDir = resolve(root, "assets");
 
 function normalizeEntryPath(file) {

@@ -1,49 +1,43 @@
-## Play Store listing assets for RewardLoop
+## Reward Wheel — Neon Arcade Redesign
 
-I'll prepare all the copy + visual assets you need to fill out the store listing.
+Refresh `src/routes/app.spin.tsx` only (visual + label layout). No business logic, RPC, or reward values change.
 
-### 1. Store listing copy (drafted as a downloadable file)
+### The look (Neon Arcade)
 
-Write `/mnt/documents/rewardloop-store-listing.md` containing:
+- **Backdrop**: dark navy radial gradient panel behind the wheel (only on this screen, doesn't change app theme), subtle starfield/dot grid for depth.
+- **Wheel body**: deep near-black segments separated by **thin neon dividers** alternating brand orange (`--brand`) and cyan accents.
+- **Outer ring**: double ring — outer thin metallic stroke + inner glowing neon halo (animated soft pulse using existing `--shadow-brand` token plus a new cyan glow).
+- **Pointer**: chunky neon triangle at top with drop-shadow glow; gentle bob animation on idle.
+- **Center hub**: dark glass disc with a glowing `Sparkles` icon and a hairline neon ring; subtle rotating conic shimmer behind it while spinning.
+- **Won banner**: keep existing `reward-pop` but restyle as a neon pill ("+50 PTS") with glow.
+- **Spin button**: keep functionality; restyle as a neon pill — gradient brand→cyan, inner highlight, glow on hover/active.
 
-- **App name** (max 30 chars): `RewardLoop — Play & Earn`
-- **Short description** (max 80 chars): a punchy one-liner about earning points by playing daily
-- **Full description** (max 4000 chars): structured with intro hook, "What you can do" bullets (Daily missions, Spin the wheel, Trivia, Tap Dash, Streaks, Referrals, Redemptions), "Why players love it", a brief disclosure that rewards depend on availability/region and ads fund the platform, and contact line
-- 2–3 alternate short-description variants so you can A/B
-- Suggested **tags**: Rewards, Casual, Trivia, Mini games, Loyalty
+All colors via tokens in `src/styles.css` (add `--neon-cyan`, `--wheel-bg`, `--wheel-segment`, `--shadow-neon`). No raw hex in the component.
 
-### 2. App icon — 512×512 PNG
+### Labels — Wheel of Fortune style (no clipping, ever)
 
-Generated via `imagegen` (premium quality for crisp edges):
-- RewardLoop "loop" mark: a stylized circular loop forming a coin/gift shape
-- Brand orange gradient (matches `--brand` token: warm orange `#f59e0b` family) on a clean background
-- No text inside the icon (Play Store rejects icons with readable text in most cases — and it scales down to launcher sizes)
-- Saved to `/mnt/documents/rewardloop-icon-512.png`
+Replace the current absolutely-positioned divs with an **SVG overlay** sized to the wheel. For each segment:
 
-### 3. Feature graphic — 1024×500 PNG
+- Render the number as SVG `<text>` rotated to the wedge's mid-angle, **oriented radially** (reading from center outward), placed on a chord well inside the rim.
+- Use SVG `textLength` + a measured safe radius so the glyphs always fit inside their wedge regardless of digit count (5 vs 100).
+- Drop the "PTS" sub-label off the wheel — show it once in the legend ("All values in points") under the wheel, freeing room and making numbers larger and crisper.
+- White fill with neon outer stroke for contrast against dark segments — guaranteed legible.
 
-Generated via `imagegen` (premium):
-- Bold orange gradient background matching the in-app brand header
-- Loop/coin motif on the left, wordmark "RewardLoop" + tagline "Play. Earn. Redeem." on the right
-- Safe zone respected (no critical content within 100px of edges — Play often crops for different surfaces)
-- No screenshots embedded (Google discourages mock device frames in feature graphics)
-- Saved to `/mnt/documents/rewardloop-feature-1024x500.png`
+Because the labels live in an SVG that rotates with the wheel (same transform), they spin together like the show. Geometry math guarantees they never cross the rim.
 
-### 4. QA pass
+### Technical notes
 
-After generation, inspect both images at full size for: cropping, edge artifacts, text legibility at small sizes (icon at 48px), and brand-color accuracy. Re-generate if anything looks off.
+- File touched: `src/routes/app.spin.tsx` (markup + small helper for SVG label geometry).
+- Tokens added to `src/styles.css`: `--neon-cyan`, `--wheel-bg`, `--wheel-segment-a`, `--wheel-segment-b`, `--shadow-neon`, plus a `.neon-pulse` keyframe.
+- Keep `SEGMENTS`, `claim_spin_reward` RPC, cooldown, ad gating, confetti, toast — all unchanged.
+- After implement: regenerate `03-spin.png` Play Store screenshot from a fresh capture of the new wheel.
 
-### What I'm NOT doing in this step
+### What stays the same
 
-- **Phone screenshots** — those need to come from the actual running app (you'll capture 4–8 from the preview/device). I can give you a shot list and the recommended order. If you want, I can also build a screenshot-frame template later that overlays captions on raw screenshots.
-- **Promo video** — optional, skip unless you want it.
-- No code changes to the app itself.
+- Reward values, odds, cooldown, ad flow, header, balance display, navigation.
+- Overall page layout (header → wheel → win readout → button → fine print).
 
-### Deliverables
+### Out of scope
 
-Three files in your downloads:
-1. `rewardloop-store-listing.md` — all copy, ready to paste into Play Console
-2. `rewardloop-icon-512.png` — app icon
-3. `rewardloop-feature-1024x500.png` — feature graphic
-
-Plus a screenshot shot list in chat.
+- No changes to other screens, theme, or app-wide colors.
+- No new dependencies.

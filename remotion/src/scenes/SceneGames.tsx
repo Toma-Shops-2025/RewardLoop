@@ -2,14 +2,15 @@ import { AbsoluteFill, useCurrentFrame, useVideoConfig, spring, interpolate } fr
 import { loadFont as loadDisplay } from "@remotion/google-fonts/Sora";
 import { loadFont as loadBody } from "@remotion/google-fonts/Inter";
 import { C } from "../theme";
+import { IconSpin, IconTrivia, IconTapDash } from "../components/Icons";
 
 const display = loadDisplay("normal", { weights: ["800"] }).fontFamily;
 const body = loadBody("normal", { weights: ["500", "700"] }).fontFamily;
 
 const games = [
-  { name: "Spin", icon: "🎡", color: C.orangeBright },
-  { name: "Trivia", icon: "❓", color: C.gold },
-  { name: "Tap Dash", icon: "⚡", color: C.orangeDeep },
+  { name: "Spin", Icon: IconSpin, color: C.orangeBright },
+  { name: "Trivia", Icon: IconTrivia, color: C.gold },
+  { name: "Tap Dash", Icon: IconTapDash, color: C.orangeDeep },
 ];
 
 export const SceneGames = () => {
@@ -32,6 +33,7 @@ export const SceneGames = () => {
           const sp = spring({ frame: frame - 25 - i * 14, fps, config: { damping: 14, stiffness: 100 } });
           const rot = interpolate(sp, [0, 1], [-8, 0]);
           const x = interpolate(sp, [0, 1], [i % 2 === 0 ? -600 : 600, 0]);
+          const Icon = g.Icon;
           return (
             <div key={i} style={{
               width: 820, padding: "44px 56px", borderRadius: 36,
@@ -41,9 +43,9 @@ export const SceneGames = () => {
               boxShadow: "0 30px 60px rgba(234,88,12,0.4)",
             }}>
               <div style={{
-                width: 140, height: 140, borderRadius: 32, background: "rgba(255,255,255,0.2)",
-                display: "flex", alignItems: "center", justifyContent: "center", fontSize: 80,
-              }}>{g.icon}</div>
+                width: 140, height: 140, borderRadius: 32, background: "rgba(255,255,255,0.22)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}><Icon size={88} color="#fff" /></div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 64, fontWeight: 800, color: "#fff", letterSpacing: -1 }}>{g.name}</div>
                 <div style={{ fontFamily: body, fontWeight: 500, fontSize: 28, color: "rgba(255,255,255,0.9)", marginTop: 4 }}>

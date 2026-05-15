@@ -9,6 +9,7 @@ const links = [
   { to: "/legal/disclaimer", label: "Disclaimer" },
   { to: "/legal/ad-disclosure", label: "Ads" },
   { to: "/legal/data-safety", label: "Data Safety" },
+  { to: "/legal/delete-account", label: "Delete Account" },
   { to: "/legal/faq", label: "FAQ" },
 ] as const;
 

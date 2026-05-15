@@ -21,6 +21,7 @@ import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LegalFaqRouteImport } from './routes/legal.faq'
 import { Route as LegalDisclaimerRouteImport } from './routes/legal.disclaimer'
+import { Route as LegalDeleteAccountRouteImport } from './routes/legal.delete-account'
 import { Route as LegalDataSafetyRouteImport } from './routes/legal.data-safety'
 import { Route as LegalAdDisclosureRouteImport } from './routes/legal.ad-disclosure'
 import { Route as AppWithdrawHistoryRouteImport } from './routes/app.withdraw-history'
@@ -94,6 +95,11 @@ const LegalFaqRoute = LegalFaqRouteImport.update({
 const LegalDisclaimerRoute = LegalDisclaimerRouteImport.update({
   id: '/disclaimer',
   path: '/disclaimer',
+  getParentRoute: () => LegalRoute,
+} as any)
+const LegalDeleteAccountRoute = LegalDeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
   getParentRoute: () => LegalRoute,
 } as any)
 const LegalDataSafetyRoute = LegalDataSafetyRouteImport.update({
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/app/withdraw-history': typeof AppWithdrawHistoryRoute
   '/legal/ad-disclosure': typeof LegalAdDisclosureRoute
   '/legal/data-safety': typeof LegalDataSafetyRoute
+  '/legal/delete-account': typeof LegalDeleteAccountRoute
   '/legal/disclaimer': typeof LegalDisclaimerRoute
   '/legal/faq': typeof LegalFaqRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -214,6 +221,7 @@ export interface FileRoutesByTo {
   '/app/withdraw-history': typeof AppWithdrawHistoryRoute
   '/legal/ad-disclosure': typeof LegalAdDisclosureRoute
   '/legal/data-safety': typeof LegalDataSafetyRoute
+  '/legal/delete-account': typeof LegalDeleteAccountRoute
   '/legal/disclaimer': typeof LegalDisclaimerRoute
   '/legal/faq': typeof LegalFaqRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/app/withdraw-history': typeof AppWithdrawHistoryRoute
   '/legal/ad-disclosure': typeof LegalAdDisclosureRoute
   '/legal/data-safety': typeof LegalDataSafetyRoute
+  '/legal/delete-account': typeof LegalDeleteAccountRoute
   '/legal/disclaimer': typeof LegalDisclaimerRoute
   '/legal/faq': typeof LegalFaqRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/app/withdraw-history'
     | '/legal/ad-disclosure'
     | '/legal/data-safety'
+    | '/legal/delete-account'
     | '/legal/disclaimer'
     | '/legal/faq'
     | '/legal/privacy'
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/app/withdraw-history'
     | '/legal/ad-disclosure'
     | '/legal/data-safety'
+    | '/legal/delete-account'
     | '/legal/disclaimer'
     | '/legal/faq'
     | '/legal/privacy'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/app/withdraw-history'
     | '/legal/ad-disclosure'
     | '/legal/data-safety'
+    | '/legal/delete-account'
     | '/legal/disclaimer'
     | '/legal/faq'
     | '/legal/privacy'
@@ -428,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/disclaimer'
       fullPath: '/legal/disclaimer'
       preLoaderRoute: typeof LegalDisclaimerRouteImport
+      parentRoute: typeof LegalRoute
+    }
+    '/legal/delete-account': {
+      id: '/legal/delete-account'
+      path: '/delete-account'
+      fullPath: '/legal/delete-account'
+      preLoaderRoute: typeof LegalDeleteAccountRouteImport
       parentRoute: typeof LegalRoute
     }
     '/legal/data-safety': {
@@ -568,6 +587,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 interface LegalRouteChildren {
   LegalAdDisclosureRoute: typeof LegalAdDisclosureRoute
   LegalDataSafetyRoute: typeof LegalDataSafetyRoute
+  LegalDeleteAccountRoute: typeof LegalDeleteAccountRoute
   LegalDisclaimerRoute: typeof LegalDisclaimerRoute
   LegalFaqRoute: typeof LegalFaqRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
@@ -578,6 +598,7 @@ interface LegalRouteChildren {
 const LegalRouteChildren: LegalRouteChildren = {
   LegalAdDisclosureRoute: LegalAdDisclosureRoute,
   LegalDataSafetyRoute: LegalDataSafetyRoute,
+  LegalDeleteAccountRoute: LegalDeleteAccountRoute,
   LegalDisclaimerRoute: LegalDisclaimerRoute,
   LegalFaqRoute: LegalFaqRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
@@ -598,13 +619,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

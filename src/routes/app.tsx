@@ -71,7 +71,7 @@ function AppLayout() {
               return (
                 <li key={t.to}>
                   <Link to={t.to} className={`relative flex flex-col items-center gap-0.5 py-2.5 transition-colors ${active ? "text-brand" : "text-muted-foreground"}`}>
-                    {active && <span className="absolute top-0 h-1 w-8 rounded-b-full bg-brand" />}
+                    {active && <span className="absolute top-0 h-1 w-8 rounded-b-full bg-brand" style={{ boxShadow: "0 2px 10px oklch(0.85 0.16 200 / 0.7)" }} />}
                     <Icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} />
                     <span className="text-[11px] font-semibold">{t.label}</span>
                   </Link>

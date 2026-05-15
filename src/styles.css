@@ -159,10 +159,12 @@
     background-size: 14px 14px;
   }
 
-  /* Streak flame pulse */
+  /* Streak flame pulse — warm core with cyan outer halo */
   .flame-pulse {
     animation: flame-pulse 1.6s ease-in-out infinite;
-    filter: drop-shadow(0 0 6px oklch(0.85 0.2 60 / 0.6));
+    filter:
+      drop-shadow(0 0 6px oklch(0.85 0.2 60 / 0.6))
+      drop-shadow(0 0 14px oklch(0.85 0.16 200 / 0.45));
   }
   @keyframes flame-pulse {
     0%, 100% { transform: scale(1); }
@@ -209,12 +211,16 @@
   .badge-rare { background: oklch(0.92 0.1 230); color: oklch(0.35 0.1 240); }
   .badge-bonus { background: var(--gradient-happy); color: var(--brand-foreground); }
 
-  /* Tap Dash target */
+  /* Tap Dash target — orange core, cyan neon ring (ties to wheel) */
   .td-target {
     position: absolute;
     border-radius: 9999px;
     background: var(--gradient-brand);
-    box-shadow: 0 0 24px oklch(0.78 0.17 60 / 0.6), inset 0 0 0 3px oklch(1 0 0 / 0.85);
+    box-shadow:
+      0 0 0 2px oklch(0.85 0.16 200 / 0.85),
+      0 0 18px oklch(0.85 0.16 200 / 0.55),
+      0 0 28px oklch(0.78 0.17 60 / 0.5),
+      inset 0 0 0 3px oklch(1 0 0 / 0.85);
     will-change: transform, opacity;
     animation: td-pop 0.18s ease-out both;
     cursor: pointer;
@@ -239,8 +245,8 @@
     position: absolute;
     pointer-events: none;
     font-weight: 800;
-    color: var(--brand);
-    text-shadow: 0 1px 0 oklch(1 0 0 / 0.8);
+    color: oklch(0.85 0.16 200);
+    text-shadow: 0 0 8px oklch(0.85 0.16 200 / 0.7), 0 1px 0 oklch(0 0 0 / 0.4);
     animation: td-float 0.7s ease-out forwards;
   }
   @keyframes td-float {

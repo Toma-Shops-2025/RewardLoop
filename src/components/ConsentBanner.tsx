@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { isNativeApp } from "@/lib/native-auth";
 
 const LS_KEY = "rl:consent:v1";
 
 type Choice = "accepted" | "essential";
+
+// Routes where we never show the web consent banner — it can sit over the
+// input fields on small screens and interfere with the soft keyboard.
+const HIDDEN_ROUTES = ["/login", "/signup", "/onboarding"];
 
 /**
  * Lightweight ad / analytics consent banner. AdMob's UMP SDK takes over on
@@ -13,11 +18,16 @@ type Choice = "accepted" | "essential";
  */
 export function ConsentBanner() {
   const [show, setShow] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Never render this banner inside the native app — AdMob UMP handles
+    // consent there, and a web overlay can interfere with form input.
+    if (isNativeApp()) return;
+    if (HIDDEN_ROUTES.some((r) => pathname.startsWith(r))) return;
     if (!localStorage.getItem(LS_KEY)) setShow(true);
-  }, []);
+  }, [pathname]);
 
   const persist = async (choice: Choice) => {
     localStorage.setItem(LS_KEY, choice);

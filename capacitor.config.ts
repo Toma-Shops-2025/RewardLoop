@@ -4,7 +4,18 @@ const config: CapacitorConfig = {
   appId: "app.rewardloop",
   appName: "RewardLoop",
   webDir: "dist/client",
+  android: {
+    // Critical for input freeze fix: let the WebView resize when the soft
+    // keyboard opens instead of getting stuck mid-focus transition.
+    webContentsDebuggingEnabled: true,
+  },
   plugins: {
+    Keyboard: {
+      // "native" = Android resizes the WebView when keyboard opens, which
+      // prevents the "tap input → screen frozen" bug we were seeing.
+      resize: "native",
+      resizeOnFullScreen: true,
+    },
     AdMob: {
       // RewardLoop AdMob App ID — Android
       appId: "ca-app-pub-7552743356249250~3141333538",

@@ -16,6 +16,20 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  // Native-only diagnostics: log focus + keyboard so the next test build
+  // tells us exactly when (if ever) input stops responding.
+  if (typeof window !== "undefined" && !(window as unknown as { __rlLoginDbg?: boolean }).__rlLoginDbg) {
+    (window as unknown as { __rlLoginDbg?: boolean }).__rlLoginDbg = true;
+    import("@/lib/native-auth").then(({ isNativeApp }) => {
+      if (!isNativeApp()) return;
+      import("@capacitor/keyboard").then(({ Keyboard }) => {
+        Keyboard.addListener("keyboardDidShow", (i) => console.log("[login] keyboardDidShow", i));
+        Keyboard.addListener("keyboardDidHide", () => console.log("[login] keyboardDidHide"));
+      }).catch((e) => console.log("[login] keyboard plugin missing", e));
+    });
+  }
+  const logFocus = (name: string) => () => console.log(`[login] focus ${name}`);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -79,13 +93,32 @@ function Login() {
         <form onSubmit={submit} className="space-y-6">
           <label className="block">
             <span className="text-base font-bold text-foreground">Email</span>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 w-full bg-transparent border-b border-border py-2 outline-none focus:border-brand text-foreground" />
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              inputMode="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              value={email}
+              onFocus={logFocus("email")}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-2 w-full bg-transparent border-b border-border py-2 outline-none focus:border-brand text-foreground"
+            />
           </label>
           <label className="block">
             <span className="text-base font-bold text-foreground">Password</span>
-            <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 w-full bg-transparent border-b border-border py-2 outline-none focus:border-brand text-foreground" />
+            <input
+              type="password"
+              required
+              minLength={6}
+              autoComplete="current-password"
+              value={password}
+              onFocus={logFocus("password")}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-2 w-full bg-transparent border-b border-border py-2 outline-none focus:border-brand text-foreground"
+            />
           </label>
 
           <button type="submit" disabled={loading || googleLoading} className="pill-btn bg-primary text-primary-foreground w-full disabled:opacity-60">

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { isNativeApp, signInWithGoogleNative } from "@/lib/native-auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({ component: Signup });
@@ -36,6 +37,12 @@ function Signup() {
 
   const signUpWithGoogle = async () => {
     setGoogleLoading(true);
+    if (isNativeApp()) {
+      const { error } = await signInWithGoogleNative();
+      setGoogleLoading(false);
+      if (error) return toast.error(error.message ?? "Google sign-in failed");
+      return; // session will be set by deep-link handler
+    }
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: `${window.location.origin}/app`,
       extraParams: form.referral.trim()

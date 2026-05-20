@@ -127,13 +127,23 @@
 
 @layer base {
   * { border-color: var(--color-border); }
+  html { color-scheme: light; }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     -webkit-tap-highlight-color: transparent;
   }
   html, body, #root { height: 100%; }
+
+  /* Force visible input text inside Android WebView — it otherwise
+     applies its own dark-mode color and renders white-on-white. */
+  input, textarea, select {
+    color: var(--color-foreground);
+    -webkit-text-fill-color: var(--color-foreground);
+    caret-color: var(--color-foreground);
+  }
 }
+
 
 @layer components {
   .brand-bg { background: var(--gradient-brand); }

@@ -1,43 +1,90 @@
-## Reward Wheel — Neon Arcade Redesign
+# Fix Android Login: Invisible Text + Google Sign-In
 
-Refresh `src/routes/app.spin.tsx` only (visual + label layout). No business logic, RPC, or reward values change.
+Two separate bugs, two separate fixes. Both ship in the same APK rebuild.
 
-### The look (Neon Arcade)
+---
 
-- **Backdrop**: dark navy radial gradient panel behind the wheel (only on this screen, doesn't change app theme), subtle starfield/dot grid for depth.
-- **Wheel body**: deep near-black segments separated by **thin neon dividers** alternating brand orange (`--brand`) and cyan accents.
-- **Outer ring**: double ring — outer thin metallic stroke + inner glowing neon halo (animated soft pulse using existing `--shadow-brand` token plus a new cyan glow).
-- **Pointer**: chunky neon triangle at top with drop-shadow glow; gentle bob animation on idle.
-- **Center hub**: dark glass disc with a glowing `Sparkles` icon and a hairline neon ring; subtle rotating conic shimmer behind it while spinning.
-- **Won banner**: keep existing `reward-pop` but restyle as a neon pill ("+50 PTS") with glow.
-- **Spin button**: keep functionality; restyle as a neon pill — gradient brand→cyan, inner highlight, glow on hover/active.
+## Bug 1: Cursor shows but typing doesn't appear
 
-All colors via tokens in `src/styles.css` (add `--neon-cyan`, `--wheel-bg`, `--wheel-segment`, `--shadow-neon`). No raw hex in the component.
+**Cause:** Android's WebView is applying its own dark-mode text color (white) to the input fields, on top of the white background. The cursor is visible but the letters are white-on-white.
 
-### Labels — Wheel of Fortune style (no clipping, ever)
+**Fix:** Force a light color scheme on the inputs and explicitly set the text color so the WebView can't override it.
 
-Replace the current absolutely-positioned divs with an **SVG overlay** sized to the wheel. For each segment:
+### What I'll change
 
-- Render the number as SVG `<text>` rotated to the wedge's mid-angle, **oriented radially** (reading from center outward), placed on a chord well inside the rim.
-- Use SVG `textLength` + a measured safe radius so the glyphs always fit inside their wedge regardless of digit count (5 vs 100).
-- Drop the "PTS" sub-label off the wheel — show it once in the legend ("All values in points") under the wheel, freeing room and making numbers larger and crisper.
-- White fill with neon outer stroke for contrast against dark segments — guaranteed legible.
+1. `src/styles.css` — add a global rule that pins inputs to a visible text color and tells the WebView "this app is light-themed":
+   ```css
+   html { color-scheme: light; }
+   input, textarea, select {
+     color: var(--foreground);
+     -webkit-text-fill-color: var(--foreground);
+     caret-color: var(--foreground);
+     background-color: transparent;
+   }
+   ```
 
-Because the labels live in an SVG that rotates with the wheel (same transform), they spin together like the show. Geometry math guarantees they never cross the rim.
+This fixes typing on **every** input in the app, not just login.
 
-### Technical notes
+---
 
-- File touched: `src/routes/app.spin.tsx` (markup + small helper for SVG label geometry).
-- Tokens added to `src/styles.css`: `--neon-cyan`, `--wheel-bg`, `--wheel-segment-a`, `--wheel-segment-b`, `--shadow-neon`, plus a `.neon-pulse` keyframe.
-- Keep `SEGMENTS`, `claim_spin_reward` RPC, cooldown, ad gating, confetti, toast — all unchanged.
-- After implement: regenerate `03-spin.png` Play Store screenshot from a fresh capture of the new wheel.
+## Bug 2: Google sign-in breaks the app
 
-### What stays the same
+**Cause:** Tapping Google navigates to `https://localhost/~oauth/initiate`, which is a Lovable web-hosting URL that doesn't exist inside the installed app. The WebView gets stuck on a broken page.
 
-- Reward values, odds, cooldown, ad flow, header, balance display, navigation.
-- Overall page layout (header → wheel → win readout → button → fine print).
+**Fix:** When running inside the Android app, the Google button will instead open the phone's real browser (Chrome), let the user sign in to Google there, and bounce back into the app via the `app.rewardloop://` URL scheme you already have configured.
 
-### Out of scope
+### What I'll change
 
-- No changes to other screens, theme, or app-wide colors.
-- No new dependencies.
+1. **Install two Capacitor plugins** (one-time, I run this for you):
+   - `@capacitor/browser` — opens the in-app browser tab for Google
+   - `@capacitor/app` — listens for the bounce-back to `app.rewardloop://`
+
+2. **`src/lib/native-auth.ts` (new file)** — a small helper that:
+   - Detects if we're in the native app (vs. the website)
+   - Calls Supabase's `signInWithOAuth` with `skipBrowserRedirect: true` to get the Google sign-in URL
+   - Opens that URL in the phone's browser via `Browser.open(...)`
+   - Listens for the app to be reopened via `app.rewardloop://app?code=...`
+   - Hands the code back to Supabase with `exchangeCodeForSession(...)` to finish login
+
+3. **`src/routes/login.tsx` and `src/routes/signup.tsx`** — the Google button checks if it's running natively; if yes it uses the new helper, if no (website) it keeps using the existing Lovable broker flow that already works.
+
+### What YOU need to do once (in Lovable Cloud settings)
+
+For the bounce-back to work, the backend needs to know `app.rewardloop://app` is a trusted redirect. After I push the code:
+
+1. Open **Cloud → Users → Auth Settings → URL Configuration**
+2. Under **Redirect URLs**, add: `app.rewardloop://app`
+3. Save
+
+I'll remind you of this exact step with a clickable button at the end.
+
+---
+
+## After the code changes — rebuilding the APK
+
+You've done this dance once already, so it'll be quick:
+
+1. In the Lovable chat, after my changes finish, click **Export to GitHub** (or pull the latest if already exported)
+2. On your PC, in your project folder, open a terminal and run:
+   ```
+   npm install
+   npm run build
+   npx cap sync android
+   ```
+3. In Android Studio: **Build → Generate Signed Bundle / APK** (same as last time)
+4. Upload the new `.aab` to Play Console → Internal testing → Create new release
+
+---
+
+## Why I'm NOT just hiding the Google button
+
+You picked option 2 (browser flow), so I'm building option 2. If it turns out the Supabase redirect-URL setup is a hassle, hiding the button on native is a 30-second follow-up edit.
+
+---
+
+## Technical notes (skip if you want)
+
+- `Capacitor.isNativePlatform()` is the runtime check used to branch logic — no separate native/web builds needed.
+- The OAuth flow uses Supabase's PKCE code exchange, not the implicit token flow, so no tokens land in URL fragments where the WebView could leak them.
+- `App.addListener('appUrlOpen', ...)` fires when Android resolves the `app.rewardloop://` intent filter that's already in your `AndroidManifest.xml` (Capacitor adds it from `capacitor.config.ts`'s `appId`).
+- The web `lovable.auth.signInWithOAuth("google", ...)` path is preserved unchanged — only the native branch is new.

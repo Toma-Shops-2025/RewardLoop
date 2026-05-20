@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import logo from "@/assets/rewardloop-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { isNativeApp, signInWithGoogleNative } from "@/lib/native-auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({ component: Login });
@@ -27,6 +28,12 @@ function Login() {
 
   const signInWithGoogle = async () => {
     setGoogleLoading(true);
+    if (isNativeApp()) {
+      const { error } = await signInWithGoogleNative();
+      setGoogleLoading(false);
+      if (error) return toast.error(error.message ?? "Google sign-in failed");
+      return; // session will be set by deep-link handler
+    }
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: `${window.location.origin}/app`,
     });

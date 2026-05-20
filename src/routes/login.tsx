@@ -56,21 +56,25 @@ function Login() {
         <img src={logo} alt="RewardLoop" width={128} height={128} className="mx-auto h-28 w-28 rounded-2xl mb-4" loading="lazy" />
         <p className="text-center text-muted-foreground text-sm mb-6">Welcome back to RewardLoop</p>
 
-        <button
-          type="button"
-          onClick={signInWithGoogle}
-          disabled={googleLoading || loading}
-          className="pill-btn w-full bg-card border border-border text-foreground flex items-center justify-center gap-3 disabled:opacity-60"
-        >
-          <GoogleIcon />
-          <span className="font-bold">{googleLoading ? "Connecting…" : "Continue with Google"}</span>
-        </button>
+        {!isNativeApp() && (
+          <>
+            <button
+              type="button"
+              onClick={signInWithGoogle}
+              disabled={googleLoading || loading}
+              className="pill-btn w-full bg-card border border-border text-foreground flex items-center justify-center gap-3 disabled:opacity-60"
+            >
+              <GoogleIcon />
+              <span className="font-bold">{googleLoading ? "Connecting…" : "Continue with Google"}</span>
+            </button>
 
-        <div className="flex items-center gap-3 my-5">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-[11px] text-muted-foreground uppercase tracking-wider">or email</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
+            <div className="flex items-center gap-3 my-5">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">or email</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        )}
 
         <form onSubmit={submit} className="space-y-6">
           <label className="block">

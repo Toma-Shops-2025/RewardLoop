@@ -65,21 +65,25 @@ function Signup() {
       </header>
 
       <div className="flex-1 px-6 pt-6 pb-6 max-w-md w-full mx-auto">
-        <button
-          type="button"
-          onClick={signUpWithGoogle}
-          disabled={googleLoading || loading}
-          className="pill-btn w-full bg-card border border-border text-foreground flex items-center justify-center gap-3 disabled:opacity-60 mb-5"
-        >
-          <GoogleIcon />
-          <span className="font-bold">{googleLoading ? "Connecting…" : "Sign up with Google"}</span>
-        </button>
+        {!isNativeApp() && (
+          <>
+            <button
+              type="button"
+              onClick={signUpWithGoogle}
+              disabled={googleLoading || loading}
+              className="pill-btn w-full bg-card border border-border text-foreground flex items-center justify-center gap-3 disabled:opacity-60 mb-5"
+            >
+              <GoogleIcon />
+              <span className="font-bold">{googleLoading ? "Connecting…" : "Sign up with Google"}</span>
+            </button>
 
-        <div className="flex items-center gap-3 mb-5">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-[11px] text-muted-foreground uppercase tracking-wider">or email</span>
-          <div className="h-px flex-1 bg-border" />
-        </div>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="h-px flex-1 bg-border" />
+              <span className="text-[11px] text-muted-foreground uppercase tracking-wider">or email</span>
+              <div className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        )}
 
         <form onSubmit={submit} className="space-y-5">
           {[

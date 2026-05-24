@@ -44,10 +44,16 @@ function Spin() {
       setSpinning(false);
       return;
     }
-    const idx = (data as { segment: number; points: number }).segment;
     const reward = (data as { segment: number; points: number }).points;
+    // Derive the landing index from `points` so the wheel can NEVER disagree
+    // with the awarded amount, even if a stale build has a different segment
+    // ordering than the DB function.
+    const idx = SEGMENTS.indexOf(reward);
     const seg = 360 / SEGMENTS.length;
-    const target = 360 * 6 + (360 - (idx * seg + seg / 2));
+    // Always spin forward (at least 6 full turns past current angle) so the
+    // wheel never goes backwards between spins.
+    const base = Math.ceil(angle / 360) * 360 + 360 * 6;
+    const target = base + (360 - (idx * seg + seg / 2));
     setAngle(target);
 
     setTimeout(async () => {

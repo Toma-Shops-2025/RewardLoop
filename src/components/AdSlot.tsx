@@ -19,9 +19,9 @@ export function AdSlot({ label = "Sponsored" }: { label?: string }) {
   }, []);
 
   if (Capacitor.isNativePlatform()) {
-    // The native banner overlays the bottom of the screen; reserve some space
-    // so on-screen content isn't covered.
-    return <div aria-hidden className="h-14" />;
+    // Reserve space for both the native banner (~56dp) and the bottom tab
+    // bar offset (~64dp) so page content isn't hidden behind either.
+    return <div aria-hidden className="h-28" />;
   }
 
   return (

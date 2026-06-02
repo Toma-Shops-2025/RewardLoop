@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Clock, X, Info, Gift } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { supabase } from "@/integrations/supabase/client";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import { z } from "zod";
 
 export const Route = createFileRoute("/app/withdraw")({ component: Withdraw });

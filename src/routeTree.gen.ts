@@ -36,6 +36,7 @@ import { Route as AppLeaderboardRouteImport } from './routes/app.leaderboard'
 import { Route as AppHowRewardsRouteImport } from './routes/app.how-rewards'
 import { Route as AppGamesRouteImport } from './routes/app.games'
 import { Route as AppAboutRouteImport } from './routes/app.about'
+import { Route as AppAdminRedemptionsRouteImport } from './routes/app.admin.redemptions'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -172,6 +173,11 @@ const AppAboutRoute = AppAboutRouteImport.update({
   path: '/about',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAdminRedemptionsRoute = AppAdminRedemptionsRouteImport.update({
+  id: '/admin/redemptions',
+  path: '/admin/redemptions',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -201,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof LegalTermsRoute
   '/app/': typeof AppIndexRoute
   '/legal/': typeof LegalIndexRoute
+  '/app/admin/redemptions': typeof AppAdminRedemptionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof LegalTermsRoute
   '/app': typeof AppIndexRoute
   '/legal': typeof LegalIndexRoute
+  '/app/admin/redemptions': typeof AppAdminRedemptionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/app/': typeof AppIndexRoute
   '/legal/': typeof LegalIndexRoute
+  '/app/admin/redemptions': typeof AppAdminRedemptionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -289,6 +298,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/app/'
     | '/legal/'
+    | '/app/admin/redemptions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -316,6 +326,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/app'
     | '/legal'
+    | '/app/admin/redemptions'
   id:
     | '__root__'
     | '/'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/app/'
     | '/legal/'
+    | '/app/admin/redemptions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -547,6 +559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAboutRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/admin/redemptions': {
+      id: '/app/admin/redemptions'
+      path: '/admin/redemptions'
+      fullPath: '/app/admin/redemptions'
+      preLoaderRoute: typeof AppAdminRedemptionsRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -564,6 +583,7 @@ interface AppRouteChildren {
   AppWithdrawRoute: typeof AppWithdrawRoute
   AppWithdrawHistoryRoute: typeof AppWithdrawHistoryRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAdminRedemptionsRoute: typeof AppAdminRedemptionsRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -580,6 +600,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppWithdrawRoute: AppWithdrawRoute,
   AppWithdrawHistoryRoute: AppWithdrawHistoryRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAdminRedemptionsRoute: AppAdminRedemptionsRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -619,3 +640,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

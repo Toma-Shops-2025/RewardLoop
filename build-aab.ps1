@@ -3,7 +3,7 @@
 
 $ProjectPath  = "$env:USERPROFILE\Desktop\rewardloop"
 $KeystorePath = "$env:USERPROFILE\Downloads\Other\rewardloopAAB"
-$KeyAlias     = "rewardloop"
+$KeyAlias     = "rewardloop1"
 $BumpVersion  = $true
 
 $ErrorActionPreference = "Stop"

@@ -43,7 +43,7 @@ const NewRedemptionAlertEmail = ({
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>
-      New redemption: {points ?? "?"} pts for {formatBrand(giftCardBrand)}
+      {`New redemption: ${points ?? "?"} pts for ${formatBrand(giftCardBrand)}`}
     </Preview>
     <Body style={main}>
       <Container style={container}>

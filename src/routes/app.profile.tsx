@@ -27,12 +27,15 @@ function ProfilePage() {
   const { profile, userId } = useApp();
   const navigate = useNavigate();
   const [txs, setTxs] = useState<Tx[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const runDelete = useServerFn(deleteMyAccount);
 
   useEffect(() => {
     supabase.from("transactions").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50)
       .then(({ data }) => setTxs((data ?? []) as Tx[]));
+    supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
   }, [userId]);
 
   const logout = async () => { await supabase.auth.signOut(); navigate({ to: "/login" }); };

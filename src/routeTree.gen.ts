@@ -24,6 +24,7 @@ import { Route as LegalDisclaimerRouteImport } from './routes/legal.disclaimer'
 import { Route as LegalDeleteAccountRouteImport } from './routes/legal.delete-account'
 import { Route as LegalDataSafetyRouteImport } from './routes/legal.data-safety'
 import { Route as LegalAdDisclosureRouteImport } from './routes/legal.ad-disclosure'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AppWithdrawHistoryRouteImport } from './routes/app.withdraw-history'
 import { Route as AppWithdrawRouteImport } from './routes/app.withdraw'
 import { Route as AppTriviaRouteImport } from './routes/app.trivia'
@@ -36,7 +37,10 @@ import { Route as AppLeaderboardRouteImport } from './routes/app.leaderboard'
 import { Route as AppHowRewardsRouteImport } from './routes/app.how-rewards'
 import { Route as AppGamesRouteImport } from './routes/app.games'
 import { Route as AppAboutRouteImport } from './routes/app.about'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AppAdminRedemptionsRouteImport } from './routes/app.admin.redemptions'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
 const SignupRoute = SignupRouteImport.update({
@@ -114,6 +118,11 @@ const LegalAdDisclosureRoute = LegalAdDisclosureRouteImport.update({
   path: '/ad-disclosure',
   getParentRoute: () => LegalRoute,
 } as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppWithdrawHistoryRoute = AppWithdrawHistoryRouteImport.update({
   id: '/withdraw-history',
   path: '/withdraw-history',
@@ -174,11 +183,28 @@ const AppAboutRoute = AppAboutRouteImport.update({
   path: '/about',
   getParentRoute: () => AppRoute,
 } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppAdminRedemptionsRoute = AppAdminRedemptionsRouteImport.update({
   id: '/admin/redemptions',
   path: '/admin/redemptions',
   getParentRoute: () => AppRoute,
 } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -205,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/app/trivia': typeof AppTriviaRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/withdraw-history': typeof AppWithdrawHistoryRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/ad-disclosure': typeof LegalAdDisclosureRoute
   '/legal/data-safety': typeof LegalDataSafetyRoute
   '/legal/delete-account': typeof LegalDeleteAccountRoute
@@ -215,7 +242,10 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/legal/': typeof LegalIndexRoute
   '/app/admin/redemptions': typeof AppAdminRedemptionsRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -234,6 +264,7 @@ export interface FileRoutesByTo {
   '/app/trivia': typeof AppTriviaRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/withdraw-history': typeof AppWithdrawHistoryRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/ad-disclosure': typeof LegalAdDisclosureRoute
   '/legal/data-safety': typeof LegalDataSafetyRoute
   '/legal/delete-account': typeof LegalDeleteAccountRoute
@@ -244,7 +275,10 @@ export interface FileRoutesByTo {
   '/app': typeof AppIndexRoute
   '/legal': typeof LegalIndexRoute
   '/app/admin/redemptions': typeof AppAdminRedemptionsRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -266,6 +300,7 @@ export interface FileRoutesById {
   '/app/trivia': typeof AppTriviaRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/withdraw-history': typeof AppWithdrawHistoryRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/ad-disclosure': typeof LegalAdDisclosureRoute
   '/legal/data-safety': typeof LegalDataSafetyRoute
   '/legal/delete-account': typeof LegalDeleteAccountRoute
@@ -276,7 +311,10 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/legal/': typeof LegalIndexRoute
   '/app/admin/redemptions': typeof AppAdminRedemptionsRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -299,6 +337,7 @@ export interface FileRouteTypes {
     | '/app/trivia'
     | '/app/withdraw'
     | '/app/withdraw-history'
+    | '/email/unsubscribe'
     | '/legal/ad-disclosure'
     | '/legal/data-safety'
     | '/legal/delete-account'
@@ -309,7 +348,10 @@ export interface FileRouteTypes {
     | '/app/'
     | '/legal/'
     | '/app/admin/redemptions'
+    | '/lovable/email/suppression'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -328,6 +370,7 @@ export interface FileRouteTypes {
     | '/app/trivia'
     | '/app/withdraw'
     | '/app/withdraw-history'
+    | '/email/unsubscribe'
     | '/legal/ad-disclosure'
     | '/legal/data-safety'
     | '/legal/delete-account'
@@ -338,7 +381,10 @@ export interface FileRouteTypes {
     | '/app'
     | '/legal'
     | '/app/admin/redemptions'
+    | '/lovable/email/suppression'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   id:
     | '__root__'
     | '/'
@@ -359,6 +405,7 @@ export interface FileRouteTypes {
     | '/app/trivia'
     | '/app/withdraw'
     | '/app/withdraw-history'
+    | '/email/unsubscribe'
     | '/legal/ad-disclosure'
     | '/legal/data-safety'
     | '/legal/delete-account'
@@ -369,7 +416,10 @@ export interface FileRouteTypes {
     | '/app/'
     | '/legal/'
     | '/app/admin/redemptions'
+    | '/lovable/email/suppression'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -379,7 +429,11 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -489,6 +543,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalAdDisclosureRouteImport
       parentRoute: typeof LegalRoute
     }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/withdraw-history': {
       id: '/app/withdraw-history'
       path: '/withdraw-history'
@@ -573,12 +634,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAboutRouteImport
       parentRoute: typeof AppRoute
     }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/admin/redemptions': {
       id: '/app/admin/redemptions'
       path: '/admin/redemptions'
       fullPath: '/app/admin/redemptions'
       preLoaderRoute: typeof AppAdminRedemptionsRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -657,7 +739,11 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

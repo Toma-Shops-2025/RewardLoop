@@ -37,6 +37,7 @@ import { Route as AppHowRewardsRouteImport } from './routes/app.how-rewards'
 import { Route as AppGamesRouteImport } from './routes/app.games'
 import { Route as AppAboutRouteImport } from './routes/app.about'
 import { Route as AppAdminRedemptionsRouteImport } from './routes/app.admin.redemptions'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -178,6 +179,12 @@ const AppAdminRedemptionsRoute = AppAdminRedemptionsRouteImport.update({
   path: '/admin/redemptions',
   getParentRoute: () => AppRoute,
 } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AppIndexRoute
   '/legal/': typeof LegalIndexRoute
   '/app/admin/redemptions': typeof AppAdminRedemptionsRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -236,6 +244,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppIndexRoute
   '/legal': typeof LegalIndexRoute
   '/app/admin/redemptions': typeof AppAdminRedemptionsRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -267,6 +276,7 @@ export interface FileRoutesById {
   '/app/': typeof AppIndexRoute
   '/legal/': typeof LegalIndexRoute
   '/app/admin/redemptions': typeof AppAdminRedemptionsRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -299,6 +309,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/legal/'
     | '/app/admin/redemptions'
+    | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/legal'
     | '/app/admin/redemptions'
+    | '/lovable/email/queue/process'
   id:
     | '__root__'
     | '/'
@@ -357,6 +369,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/legal/'
     | '/app/admin/redemptions'
+    | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -366,6 +379,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   SignupRoute: typeof SignupRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -566,6 +580,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAdminRedemptionsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -636,17 +657,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   SignupRoute: SignupRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

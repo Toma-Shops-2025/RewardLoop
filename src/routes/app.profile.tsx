@@ -182,6 +182,7 @@ function ProfilePage() {
         <Row icon={BarChart3} label="Leaderboard" to="/app/leaderboard" />
         <Row icon={HelpCircle} label="How Rewards Work" to="/app/how-rewards" />
         <Row icon={Wallet} label="Redemption History" to="/app/withdraw-history" />
+        {isAdmin && <Row icon={ShieldCheck} label="Admin · Review Redemptions" to="/app/admin/redemptions" />}
         <Row icon={Info} label="About App" to="/app/about" />
         <Row icon={Shield} label="Privacy Policy" to="/legal/privacy" />
         <Row icon={FileText} label="Terms & Conditions" to="/legal/terms" />

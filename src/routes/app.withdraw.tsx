@@ -79,14 +79,33 @@ function Withdraw() {
     if (total > balance) return toast.error("Not enough points (including 2% processing fee)");
 
     setLoading(true);
-    const { error } = await supabase.rpc("request_withdrawal", {
-      p_points: amount,
-      p_brand: brand,
-      p_email: email.trim(),
-    });
+    const { data: wd, error } = await supabase
+      .rpc("request_withdrawal", {
+        p_points: amount,
+        p_brand: brand,
+        p_email: email.trim(),
+      })
+      .single();
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Redemption request submitted — we'll email you when it's delivered");
+
+    // Fire-and-forget admin alert; don't block the user on email delivery.
+    if (wd?.id) {
+      sendTransactionalEmail({
+        templateName: "new-redemption-alert",
+        idempotencyKey: `redemption-alert-${wd.id}`,
+        templateData: {
+          userName: profile?.name ?? "Player",
+          userEmail: profile?.email ?? null,
+          points: wd.points,
+          giftCardBrand: wd.gift_card_brand,
+          recipientEmail: wd.recipient_email,
+          withdrawalId: wd.id,
+        },
+      }).catch((err) => console.error("Admin alert email failed", err));
+    }
+
     setEmail("");
     setAmount(MIN_POINTS);
     await refresh();

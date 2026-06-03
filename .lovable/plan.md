@@ -1,63 +1,28 @@
-## Goal
+## What's happening
 
-Give you ready-to-paste PowerShell commands (using your `SexyMimi` user path) to build and sign the next AAB from the current working code, then upload it to Play Console.
+Yes — the red "Build unsuccessful" is real and you should let me fix it, not click "Try to fix". The TypeScript checker doesn't know about Node's `process` global, so every file that reads `process.env.*` (server-only files: Supabase admin client, auth middleware, email routes) is failing typecheck.
 
----
+This blocks the cloud build for `rewardloop.fun`. Your **local Windows AAB build will probably still succeed** because `bun run build` runs Vite which skips typecheck — but it's safer to fix it so live + AAB stay in sync.
 
-## Step 1 — Build the signed AAB
+## Fix
 
-Open **PowerShell** (just search "PowerShell" in the Start menu) and paste this whole block:
+Two tiny edits, no behavior change:
+
+1. Add `"node"` to the `types` array in `tsconfig.json` so TypeScript recognizes `process`.
+2. Also add `vite.config.mts` to the `include` array (you just renamed it last turn, and the old `.ts` reference is stale).
+
+Result:
+- `"types": ["vite/client", "node"]`
+- `"include": [..., "vite.config.mts", ...]`
+
+Then the cloud build goes green and you can proceed with the PowerShell commands to build the AAB.
+
+## After you approve
+
+Once this lands, your next step on your PC is unchanged:
 
 ```powershell
 cd C:\Users\SexyMimi\Desktop\rewardloop
 git pull
 .\build-aab.ps1
 ```
-
-When it prompts:
-- **Keystore password** → type your `rewardloopAAB` keystore password, press Enter (typing is hidden, that's normal)
-- **Key password** → just press Enter to reuse the same password (or type the key password if different)
-
-The script will automatically:
-1. Pull latest code from GitHub
-2. `bun install` + `bun run build` (compile web app)
-3. `bunx cap sync android` (copy build into Android wrapper)
-4. Bump `versionCode` from 25 → 26
-5. Sign and build the release AAB
-6. Open File Explorer with the AAB selected
-
-**Output file will be at:**
-```
-C:\Users\SexyMimi\Desktop\rewardloop\android\app\build\outputs\bundle\release\app-release.aab
-```
-
-Takes about 3–8 minutes total depending on your machine.
-
----
-
-## Step 2 — Upload to Play Console
-
-1. Go to https://play.google.com/console → click **RewardLoop**
-2. Left sidebar → **Testing → Closed testing** (your tester track)
-3. Click **Create new release**
-4. Drag `app-release.aab` into the upload box
-5. **Release notes** — paste something like:
-   ```
-   Stability fixes and UI polish.
-   ```
-6. Click **Next → Save → Review release → Start rollout to Closed testing**
-
-Testers get the update notification within a few minutes to a couple hours.
-
----
-
-## If something errors out
-
-Common ones and quick fixes:
-
-- **`git pull` says "your branch has diverged"** → run `git reset --hard origin/main` then re-run `.\build-aab.ps1`
-- **`bun: command not found`** → close PowerShell and reopen it (it picks up bun after install)
-- **Keystore password wrong** → script will error; just re-run and type carefully
-- **`gradlew.bat` not found** → run `bunx cap sync android` once manually, then re-run script
-
-Paste any error you hit and I'll give you the exact fix.

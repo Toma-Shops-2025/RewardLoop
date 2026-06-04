@@ -1,50 +1,42 @@
-# RewardLoop Promo v2 — Landscape Upgrade
+## Plan — wire up native Android icon + splash from your uploaded logo
 
-Rebuild the existing Remotion promo as a polished **16:9 / 1920×1080** spot, ~**28 seconds @ 30fps** (840 frames — safely under the 10-min sandbox render cap), with **AI-generated background music** via ElevenLabs.
+You just gave me the perfect master: a 1024×1024 RewardLoop icon. I'll use it as the single source of truth for both the launcher icon and the splash screen.
 
-## Creative direction
+### What I'll add to the repo
 
-- **Aesthetic**: "Kinetic Energy meets Premium Mobile App" — fast staggered entrances, bold orange-on-deep-brown palette already established (`#fbbf24`, `#ea580c`, cream `#fff7ed`, deep `#0d0703`), confident springs, cinematic restraint between beats.
-- **Reuse** existing brand tokens in `remotion/src/theme.ts` and the existing `public/images/icon.png`.
-- **Layout shift**: landscape lets us put **phone mockup on one side + headline/feature copy on the other**, instead of stacked. Much more "app promo" feeling.
-- **Persistent layer**: keep the floating dots background drifting across the whole video for continuity between scenes.
+1. **`resources/icon.png`** — your uploaded 1024×1024 logo, dropped in as the master icon (Capacitor reads this exact path).
+2. **`resources/splash.png`** — 2732×2732, your logo centered on the brand black background that matches the icon.
+3. **`resources/icon-foreground.png`** + **`resources/icon-background.png`** — for Android adaptive icons (foreground = logo with safe-zone padding, background = solid black). Without these, Android 8+ shows the old default mask on launchers that use adaptive icons.
+4. **`@capacitor/assets`** added as a devDependency.
+5. **`assets:generate`** npm script that runs `capacitor-assets generate --android` — generates all `mipmap-*` launcher densities, `mipmap-anydpi-v26` adaptive XML, and splash drawables into `android/app/src/main/res/` on your PC.
+6. **`BUILD_AND_PUBLISH.md` Part G update** and **`build-aab.ps1` update** — both will run `bun run assets:generate` before `bunx cap sync` so every build refreshes the native icons automatically.
 
-## Scene plan (~840 frames total)
+### Your PC workflow (only adds one command)
 
-```text
-00:00–00:03  SceneLogo         Icon spring-in + "RewardLoop" wordmark + tagline
-00:03–00:08  SceneHook         "Play games. Earn real rewards." bold type, off-center
-00:08–00:14  SceneMissions     Phone-left, copy-right: Today's Missions checklist
-00:14–00:20  SceneGames        Three game cards (Spin / Trivia / Tap Dash) slide in
-00:20–00:24  SceneStreak       Flame + day counter ticking 1 → 28
-00:24–00:28  SceneRedeem       Balance counter + gift card grid (Amazon/Visa/PP/Apple)
-00:28–00:28  SceneEnd          Logo lockup + "Get it on Google Play" badge
+```
+git pull
+bun install
+bun run build
+bun run assets:generate   ← NEW (regenerates native icons from resources/)
+bunx cap sync
 ```
 
-Transitions: mix of `fade` and `slide` from `@remotion/transitions` (already installed), reused consistently rather than a new effect each cut.
+Then Android Studio: bump `versionCode`, generate signed AAB, upload to Play. Or just run `.\build-aab.ps1` — I'll wire `assets:generate` into that script too so you don't have to remember.
 
-## Background music
+### What this fixes
 
-- Generate a **~30s upbeat, modern, optimistic electronic track** ("warm synth pluck, light percussion, uplifting, app-promo energy, no vocals") via ElevenLabs Music API → save to `remotion/public/audio/bg.mp3`.
-- Add as a Remotion `<Audio>` element at the root of `MainVideo` with `volume` ramp-in (0 → 0.55 over first 15 frames) and ramp-out at the tail.
-- **Re-enable audio in the renderer** — current `scripts/render.mjs` has `muted: true`. The skill notes Nix ffmpeg lacks `libfdk_aac`, so we'll switch the renderer to `audioCodec: 'aac'` using the default encoder, or fall back to muxing the MP3 in with ffmpeg as a post-step if encoding fails.
+- The placeholder launcher icon you saw in `android/app/src/main/res/mipmap-*` will be regenerated from your real logo on next sync.
+- The Capacitor default splash drawable will be replaced with your branded splash.
+- Future logo updates = just replace `resources/icon.png`, rerun, rebuild AAB.
 
-## Files to change / add
+### What I will NOT touch
 
-- `remotion/src/Root.tsx` — change composition to `1920×1080`, `durationInFrames: 840`.
-- `remotion/src/MainVideo.tsx` — re-choreograph scene order/durations, add `<Audio>`, adjust `FloatingDots` for landscape.
-- `remotion/src/scenes/SceneLogo.tsx`, `SceneMissions.tsx`, `SceneGames.tsx`, `SceneStreak.tsx`, `SceneRedeem.tsx`, `SceneEnd.tsx` — re-layout each for landscape (split layouts, larger negative space, repositioned phone mockup).
-- `remotion/src/scenes/SceneHook.tsx` — **new** hook scene right after the logo.
-- `remotion/src/components/Phone.tsx` — minor sizing tweak so it fits a half-width column.
-- `remotion/public/audio/bg.mp3` — **new**, generated.
-- `remotion/scripts/render.mjs` — un-mute, ensure audio is encoded; output to `/mnt/documents/rewardloop-promo-v2.mp4` (keeps the original v1 intact for comparison).
+- Web/PWA icons (already correct from yesterday).
+- The `android/` folder itself (lives on your PC; regenerated by Capacitor).
+- App logic, ads, auth, backend.
 
-## Technical notes
+### One note
 
-- ElevenLabs key: will check `secrets--fetch_secrets` for `ELEVENLABS_API_KEY` and request it via `add_secret` if missing before generating music.
-- Render via existing `node scripts/render.mjs` flow. Total runtime well under the 600s cap at 1920×1080.
-- App itself is untouched — this is purely a marketing asset under `remotion/` and `/mnt/documents/`.
+The uploaded icon has a black background built in. Android adaptive icons crop a circle/squircle out of the foreground layer, so I'll generate the foreground with extra safe-zone padding around the gold infinity+gift so nothing important gets clipped on round/squircle launchers. Background layer will be solid black to match.
 
-## Deliverable
-
-A single MP4: `/mnt/documents/rewardloop-promo-v2.mp4` (~28s, 1920×1080, with music), surfaced via a `<presentation-artifact>` tag so you can download and use it for Play Store feature graphics, social posts, or your website.
+Approve and I'll implement.

@@ -22,6 +22,9 @@ bun install
 Step "Building web app"
 bun run build
 
+Step "Regenerating Android launcher icon + splash from resources/"
+bun run assets:generate
+
 Step "Capacitor sync (Android)"
 bunx cap sync android
 

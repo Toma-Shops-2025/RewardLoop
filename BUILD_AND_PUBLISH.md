@@ -111,8 +111,14 @@ When you change anything in Lovable:
    git pull
    bun install
    bun run build
+   bun run assets:generate   # regenerates Android launcher icon + splash from resources/
    bunx cap sync
    ```
+
+   `assets:generate` reads `resources/icon.png`, `resources/icon-foreground.png`,
+   `resources/icon-background.png`, and `resources/splash.png` and writes every
+   `mipmap-*` density + splash drawable into `android/app/src/main/res/`. To
+   update the app icon later, just replace those PNGs in `resources/` and rerun.
 3. In Android Studio: bump `versionCode` in `android/app/build.gradle` (1 → 2 → 3…)
 4. Build → Generate Signed App Bundle → use the **same keystore** from Part E
 5. Upload the new `.aab` → new release in Play Console

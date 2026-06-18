@@ -1,0 +1,10 @@
+import QRCode from 'qrcode';
+import fs from 'fs';
+const URL = 'https://rewardloop.fun';
+const opts = (size, dark, light) => ({ errorCorrectionLevel: 'H', margin: 2, width: size, color: { dark, light } });
+await QRCode.toFile('src/assets/qr-rewardloop.png', URL, opts(1024, '#1a0d05', '#fff7ed'));
+await QRCode.toFile('/tmp/qr-1024.png', URL, opts(1024, '#1a0d05', '#fff7ed'));
+await QRCode.toFile('/tmp/qr-2048.png', URL, opts(2048, '#1a0d05', '#fff7ed'));
+await QRCode.toFile('/tmp/qr-trans-dark.png', URL, opts(2048, '#1a0d05ff', '#00000000'));
+await QRCode.toFile('/tmp/qr-trans-cream.png', URL, opts(2048, '#fff7edff', '#00000000'));
+console.log('ok', fs.statSync('src/assets/qr-rewardloop.png').size);

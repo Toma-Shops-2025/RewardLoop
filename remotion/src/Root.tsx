@@ -1,15 +1,15 @@
 import { Composition } from "remotion";
-import { MainVideo } from "./MainVideo";
+import { MainVideoVertical } from "./MainVideoVertical";
 
-// 16:9 landscape promo, ~28s @ 30fps
-// Scene durations sum to 920 frames, 6 transitions × 15 frames overlap = 830 final frames
+// 9:16 vertical promo, ~30s @ 30fps for TikTok/Shorts/Reels
+// Scene durations sum to 1005, 7 transitions × 15 overlap = 900 final frames
 export const RemotionRoot = () => (
   <Composition
     id="main"
-    component={MainVideo}
-    durationInFrames={830}
+    component={MainVideoVertical}
+    durationInFrames={900}
     fps={30}
-    width={1920}
-    height={1080}
+    width={1080}
+    height={1920}
   />
 );

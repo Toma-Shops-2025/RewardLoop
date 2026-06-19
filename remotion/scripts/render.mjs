@@ -6,7 +6,7 @@ import { execSync } from "child_process";
 import fs from "fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const FINAL = "/mnt/documents/rewardloop-promo-v2.mp4";
+const FINAL = "/mnt/documents/rewardloop-promo-vertical-9x16.mp4";
 const SILENT = "/tmp/rewardloop-silent.mp4";
 const MUSIC = path.resolve(__dirname, "../public/audio/bg.mp3");
 

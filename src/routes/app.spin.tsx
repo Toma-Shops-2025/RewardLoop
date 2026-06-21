@@ -10,8 +10,8 @@ import { fireConfetti } from "@/lib/confetti";
 
 export const Route = createFileRoute("/app/spin")({ component: Spin });
 
-const SEGMENTS = [5, 10, 25, 50, 15, 100, 20, 75];
-const COOLDOWN_SEC = 8;
+const SEGMENTS = [2, 5, 3, 10, 2, 15, 5, 8];
+const COOLDOWN_SEC = 30;
 
 function Spin() {
   const { profile, refresh } = useApp();

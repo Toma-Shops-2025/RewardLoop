@@ -67,6 +67,7 @@ $gradleArgs = @(
     "-Pandroid.injected.signing.key.password=$keyPass"
 )
 & .\gradlew.bat @gradleArgs
+$gradleExit = $LASTEXITCODE
 
 $storePass = $null
 $keyPass = $null
@@ -75,11 +76,12 @@ $keyPass = $null
 $aab = "$ProjectPath\android\app\build\outputs\bundle\release\app-release.aab"
 Set-Location $ProjectPath
 
-if (Test-Path $aab) {
+if ($gradleExit -eq 0 -and (Test-Path $aab)) {
     Write-Host "`n  SUCCESS" -ForegroundColor Green
     Write-Host "  Signed AAB: $aab" -ForegroundColor Green
     Write-Host "  Upload to Play Console -> Closed testing -> Create new release.`n"
     Start-Process explorer.exe "/select,`"$aab`""
 } else {
-    Write-Error "Build finished but AAB not found at $aab"
+    Write-Error "Build FAILED (gradle exit code $gradleExit). See errors above."
+    exit 1
 }

@@ -56,8 +56,17 @@ if (-not (Test-Path $KeystorePath)) {
     exit 1
 }
 
+Write-Host "    Using keystore: $KeystorePath" -ForegroundColor Yellow
+Write-Host "    Using alias: $KeyAlias" -ForegroundColor Yellow
+
 Step "Building signed release AAB"
 Set-Location "$ProjectPath\android"
+
+$aab = "$ProjectPath\android\app\build\outputs\bundle\release\app-release.aab"
+if (Test-Path $aab) {
+    Remove-Item $aab -Force
+}
+$buildStartedAt = Get-Date
 
 $gradleArgs = @(
     "bundleRelease",
@@ -73,10 +82,9 @@ $storePass = $null
 $keyPass = $null
 [System.GC]::Collect()
 
-$aab = "$ProjectPath\android\app\build\outputs\bundle\release\app-release.aab"
 Set-Location $ProjectPath
 
-if ($gradleExit -eq 0 -and (Test-Path $aab)) {
+if ($gradleExit -eq 0 -and (Test-Path $aab) -and ((Get-Item $aab).LastWriteTime -ge $buildStartedAt)) {
     Write-Host "`n  SUCCESS" -ForegroundColor Green
     Write-Host "  Signed AAB: $aab" -ForegroundColor Green
     Write-Host "  Upload to Play Console -> Closed testing -> Create new release.`n"

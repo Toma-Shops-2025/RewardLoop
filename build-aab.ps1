@@ -2,7 +2,7 @@
 # Usage: cd Desktop\rewardloop ; .\build-aab.ps1
 
 $ProjectPath  = "$env:USERPROFILE\Desktop\rewardloop"
-$KeystorePath = "$env:USERPROFILE\Downloads\Other DO NOT REMOVE\rewardloopAAB"
+$KeystorePath = "$env:USERPROFILE\Downloads\Other DO NOT REMOVE\rewardloop1"
 $KeyAlias     = "rewardloop1"
 $BumpVersion  = $true
 

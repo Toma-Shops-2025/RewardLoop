@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RewardLoop</string>
+    <string name="title_activity_main">RewardLoop</string>
+    <string name="package_name">app.rewardloop</string>
+    <string name="custom_url_scheme">app.rewardloop</string>
+</resources>

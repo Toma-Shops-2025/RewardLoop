@@ -2,7 +2,7 @@
 # Usage: cd Desktop\rewardloop ; .\build-aab.ps1
 
 $ProjectPath  = "$env:USERPROFILE\Desktop\rewardloop"
-$KeystorePath = "$env:USERPROFILE\Downloads\Other DO NOT REMOVE\rewardloop1"
+$KeystorePath = "$env:USERPROFILE\Downloads\Other DO NOT REMOVE\rewardloopAAB"
 $KeyAlias     = "rewardloop1"
 $BumpVersion  = $true
 
@@ -20,7 +20,10 @@ Step "bun install"
 bun install
 
 Step "Building web app"
+$env:VITE_PLATFORM = "capacitor"
 bun run build
+if ($LASTEXITCODE -ne 0) { throw "Web build failed" }
+$env:VITE_PLATFORM = $null
 
 Step "Regenerating Android launcher icon + splash from resources/"
 bun run assets:generate

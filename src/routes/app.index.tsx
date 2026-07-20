@@ -1,11 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { PlayCircle, Zap, Gift, Calendar, Trophy, Target, Brain, BarChart3, Star, Flame, Sparkles, Hand } from "lucide-react";
+import { PlayCircle, Zap, Gift, Calendar, Trophy, Target, Brain, BarChart3, Star, Flame, Sparkles, Hand, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-context";
 import { supabase } from "@/integrations/supabase/client";
 import { showRewardedAd } from "@/lib/ads";
 import { fireConfetti } from "@/lib/confetti";
+import { Capacitor } from "@capacitor/core";
 import logo from "@/assets/rewardloop-logo.png";
 
 export const Route = createFileRoute("/app/")({ component: Home });
@@ -38,7 +39,8 @@ const TX_LABEL: Record<string, string> = {
 };
 
 function Home() {
-  const { profile, userId, refresh } = useApp();
+  const { profile, userId, refresh, loading } = useApp();
+  const navigate = useNavigate();
   const [watching, setWatching] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [recent, setRecent] = useState<Tx[]>([]);
@@ -67,6 +69,14 @@ function Home() {
         setTodayDone(c);
       });
   }, [userId, profile?.total_earned]);
+
+  if (loading) {
+      return (
+          <div className="flex h-screen items-center justify-center bg-background">
+              <Loader2 className="h-10 w-10 animate-spin text-brand" />
+          </div>
+      );
+  }
 
   // 4 daily targets: 3 videos, 1 spin, 1 trivia, 1 daily
   const dailyDone = Math.min(todayDone.video, 3) + Math.min(todayDone.spin, 1)

@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 function createSupabaseAdminClient() {
-  let url = process.env.SUPABASE_URL || "";
+  let url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
   // AGGRESSIVE CLEANUP: Remove /rest/v1 or trailing slashes
@@ -11,9 +11,8 @@ function createSupabaseAdminClient() {
   }
 
   if (!url || !key) {
-    console.error("Missing Supabase Admin keys in Netlify Environment Variables.");
-    // Return a dummy client to prevent critical build crashes
-    return createClient<Database>("https://placeholder.supabase.co", "placeholder");
+    console.error(`[Supabase Server] Missing Configuration! URL: ${!!url}, Key: ${!!key}. Please check your Netlify Environment Variables.`);
+    return createClient<Database>("https://missing-url.supabase.co", "missing-key");
   }
 
   return createClient<Database>(url, key, {

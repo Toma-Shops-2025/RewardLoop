@@ -2,12 +2,14 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 function createSupabaseAdminClient() {
-  let url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder";
+  const url = process.env.SUPABASE_URL || "";
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-  url = url.split('/rest/v1')[0].replace(/\/$/, "");
+  if (!url || !key) {
+    console.error("Supabase Admin: Missing keys. Returning non-crashing fallback.");
+    return createClient<Database>("https://vujmezepstugbhozgtrm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1am1lemVwc3R1Z2Job3pndHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MzI3OTAsImV4cCI6MjA5OTMwODc5MH0.C1pvdemMhaBUD4GDCZ8IePitR6F18JH-QAmkKN9qXcg");
+  }
 
-  // Bypasses the strict throw so TanStack doesn't crash on build
   return createClient<Database>(url, key, {
     auth: {
       storage: undefined,

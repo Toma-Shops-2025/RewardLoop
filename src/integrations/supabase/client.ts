@@ -1,21 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
+// Standard Lovable-style client with built-in safety
 function createSupabaseClient() {
-  // Try to find the URL under any possible name
-  let url = import.meta.env.VITE_SUPABASE_URL ||
-            process.env.SUPABASE_URL ||
-            "https://placeholder.supabase.co";
+  const url = import.meta.env.VITE_SUPABASE_URL || "";
+  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
 
-  // Try to find the Key under any possible name
-  const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-              process.env.SUPABASE_ANON_KEY ||
-              "placeholder";
+  // If keys are missing, we return a client that doesn't crash the app
+  // but will log a helpful error in the console.
+  if (!url || !key) {
+    console.warn("Supabase: Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY. Application may be in a loading state.");
+    return createClient<Database>("https://vujmezepstugbhozgtrm.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1am1lemVwc3R1Z2Job3pndHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MzI3OTAsImV4cCI6MjA5OTMwODc5MH0.C1pvdemMhaBUD4GDCZ8IePitR6F18JH-QAmkKN9qXcg");
+  }
 
-  // Clean the URL
-  url = url.split('/rest/v1')[0].replace(/\/$/, "");
-
-  // RETURN A VALID CLIENT NO MATTER WHAT (Stops the Invariant Crash)
   return createClient<Database>(url, key, {
     auth: {
       storage: typeof window !== 'undefined' ? localStorage : undefined,

@@ -5,22 +5,15 @@ import type { Database } from './types'
 
 export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server(
   async ({ next }) => {
-    // 1. GATHER KEYS WITH FALLBACKS
-    let url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co";
-    const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "placeholder";
-
-    // 2. CLEAN URL (Stop the double /rest/v1 error)
-    if (url) {
-      url = url.split('/rest/v1')[0].replace(/\/$/, "");
-    }
+    const url = process.env.SUPABASE_URL || "https://hlofpkphdkarqdujmanh.supabase.co";
+    const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || "";
 
     const request = getRequest();
     if (!request?.headers) throw new Error('No headers');
 
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        // Return null context instead of throwing to prevent INVARIANT crash
-        return next({ context: { supabase: null, userId: null } });
+        throw new Error('Unauthorized');
     }
 
     const token = authHeader.replace('Bearer ', '');
@@ -29,13 +22,16 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
         auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
     });
 
-    try {
-        const { data } = await supabase.auth.getClaims(token);
-        return next({
-            context: { supabase, userId: data?.claims?.sub || null },
-        });
-    } catch (e) {
-        return next({ context: { supabase: null, userId: null } });
+    const { data, error } = await supabase.auth.getClaims(token);
+    if (error || !data?.claims || !data.claims.sub) {
+        throw new Error('Unauthorized');
     }
+
+    return next({
+      context: {
+        supabase,
+        userId: data.claims.sub,
+      },
+    });
   },
 );

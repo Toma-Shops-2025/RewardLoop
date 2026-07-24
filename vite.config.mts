@@ -13,6 +13,7 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  nitro: true, // FORCE enable Nitro to generate the .output/public folder for Netlify
   vite: {
     resolve: {
       alias: {

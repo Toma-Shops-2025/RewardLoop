@@ -5,8 +5,7 @@ const config: CapacitorConfig = {
   appName: "RewardLoop",
   webDir: "dist/client",
   server: {
-    url: "https://rewardloop.fun",
-    cleartext: false,
+    androidScheme: 'https'
   },
   android: {
     webContentsDebuggingEnabled: true,

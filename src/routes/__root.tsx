@@ -69,58 +69,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
-      { name: "theme-color", content: "#0a0a0a" },
-      { title: "RewardLoop — Gamified Rewards & Engagement Platform" },
-      { name: "description", content: "Complete daily missions, play trivia, spin the reward wheel, and earn points by engaging with sponsored content." },
-      { name: "robots", content: "index, follow" },
-      { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "RewardLoop" },
-      { name: "google", content: "notranslate" },
-      { property: "og:title", content: "RewardLoop — Gamified Rewards & Engagement Platform" },
-      { property: "og:description", content: "Complete daily missions, play trivia, spin the reward wheel, and earn points by engaging with sponsored content." },
-      { property: "og:site_name", content: "RewardLoop" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "RewardLoop — Gamified Rewards & Engagement Platform" },
-      { name: "twitter:description", content: "Complete daily missions, play trivia, spin the reward wheel, and earn points by engaging with sponsored content." },
-      { property: "og:image", content: "/icon-512.png" },
-      { name: "twitter:image", content: "/icon-512.png" },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
-      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32.png" },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
-      { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-    ],
-  }),
-  shellComponent: RootShell,
-  component: RootComponent,
-  notFoundComponent: NotFoundComponent,
-  errorComponent: ErrorComponent,
-});
-
-function RootShell({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        {typeof window !== 'undefined' ? null : <HeadContent />}
-      </head>
-      <body>
-        {children}
-        {typeof window !== 'undefined' ? null : <Scripts />}
-      </body>
-    </html>
-  );
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
@@ -132,3 +80,25 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
+// Remove RootShell entirely as it's not needed for the client-side build
+// and can cause hydration/invariant errors when nesting html/body tags.
+export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
+      { name: "theme-color", content: "#0a0a0a" },
+      { title: "RewardLoop — Gamified Rewards & Engagement Platform" },
+      { name: "description", content: "Complete daily missions, play trivia, spin the reward wheel, and earn points by engaging with sponsored content." },
+    ],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", href: "/favicon.ico", sizes: "any" },
+    ],
+  }),
+  component: RootComponent,
+  notFoundComponent: NotFoundComponent,
+  errorComponent: ErrorComponent,
+});

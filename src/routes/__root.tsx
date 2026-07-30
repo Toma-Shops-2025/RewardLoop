@@ -111,11 +111,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <HeadContent />
+        {typeof window !== 'undefined' ? null : <HeadContent />}
       </head>
       <body>
         {children}
-        <Scripts />
+        {typeof window !== 'undefined' ? null : <Scripts />}
       </body>
     </html>
   );

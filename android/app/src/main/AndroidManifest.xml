@@ -40,7 +40,7 @@
             android:value="ca-app-pub-7552743356249250~3141333538"
         />
 
-        <meta-data android:name="applovin.sdk.key" android:value="YOUR_SDK_KEY_HERE"/>
+        <meta-data android:name="applovin.sdk.key" android:value="YOUR_SDK_KEY_HERE" />
     </application>
 
     <!-- Permissions -->

@@ -14,7 +14,7 @@ dependencies {
     implementation project(':capacitor-browser')
     implementation project(':capacitor-keyboard')
     implementation project(':capawesome-capacitor-android-edge-to-edge-support')
-
+    implementation "com.applovin:applovin-sdk:13.2.0"
 }
 
 

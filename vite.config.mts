@@ -3,6 +3,7 @@ import path from "node:path";
 
 export default defineConfig({
   tanstackStart: {
+    client: { entry: "src/app/client.tsx" },
     server: { entry: "server" },
   },
   vite: {

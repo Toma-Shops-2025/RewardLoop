@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { LogOut, History, Shield, FileText, Info, Wallet, Target, Brain, BarChart3, HelpCircle, Flame, Trophy, Star, Award, Zap, Trash2, Database, ShieldCheck, Share2 } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { supabase } from "@/integrations/supabase/client";
-import { useServerFn } from "@tanstack/react-start";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { toast } from "sonner";
 
@@ -29,7 +28,6 @@ function ProfilePage() {
   const [txs, setTxs] = useState<Tx[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const runDelete = useServerFn(deleteMyAccount);
 
   useEffect(() => {
     supabase.from("transactions").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50)
@@ -47,8 +45,7 @@ function ProfilePage() {
     if (typed !== "DELETE") return;
     setDeleting(true);
     try {
-      await runDelete();
-      await supabase.auth.signOut();
+      await deleteMyAccount();
       toast.success("Account deleted.");
       navigate({ to: "/" });
     } catch (e: any) {

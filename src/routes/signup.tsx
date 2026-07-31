@@ -21,7 +21,7 @@ function Signup() {
     e.preventDefault();
     if (form.password.length < 6) return toast.error("Password must be at least 6 characters");
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: authData, error } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
@@ -29,6 +29,17 @@ function Signup() {
         data: { name: form.name, referral_code: form.referral.trim().toUpperCase() },
       },
     });
+
+    if (!error && authData.user) {
+      // Sync email to profiles for admin visibility
+      await supabase.from('profiles').insert({
+          id: authData.user.id,
+          name: form.name,
+          email: form.email,
+          referral_code: `USER-${authData.user.id.substring(0,5).toUpperCase()}`
+      }).catch(err => console.warn("Profile sync error", err));
+    }
+
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Account created! 🎉 Check your email to confirm.");

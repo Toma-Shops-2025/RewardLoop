@@ -17,13 +17,20 @@ function Splash() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const onboarded = typeof window !== "undefined" && localStorage.getItem("onboarded") === "1";
-    const t = setTimeout(async () => {
+    async function checkAuth() {
+      const onboarded = typeof window !== "undefined" && localStorage.getItem("onboarded") === "1";
       const { data } = await supabase.auth.getSession();
-      if (data.session) navigate({ to: "/app" });
-      else if (!onboarded) navigate({ to: "/onboarding" });
-      else navigate({ to: "/login" });
-    }, 1200);
+
+      if (data.session) {
+        navigate({ to: "/app" });
+      } else if (!onboarded) {
+        navigate({ to: "/onboarding" });
+      } else {
+        navigate({ to: "/login" });
+      }
+    }
+
+    const t = setTimeout(checkAuth, 1500);
     return () => clearTimeout(t);
   }, [navigate]);
 

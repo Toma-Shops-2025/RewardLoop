@@ -4,8 +4,6 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  HeadContent,
-  Scripts,
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 
@@ -70,34 +68,16 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
-
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <Outlet />
       <ConsentBanner />
       <Toaster richColors position="top-center" />
-    </QueryClientProvider>
+    </>
   );
 }
 
-// Remove RootShell entirely as it's not needed for the client-side build
-// and can cause hydration/invariant errors when nesting html/body tags.
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" },
-      { name: "theme-color", content: "#0a0a0a" },
-      { title: "RewardLoop — Gamified Rewards & Engagement Platform" },
-      { name: "description", content: "Complete daily missions, play trivia, spin the reward wheel, and earn points by engaging with sponsored content." },
-    ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "icon", href: "/favicon.ico", sizes: "any" },
-    ],
-  }),
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,

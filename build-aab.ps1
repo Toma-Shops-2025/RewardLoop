@@ -65,6 +65,12 @@ Write-Host "    Using alias: $KeyAlias" -ForegroundColor Yellow
 Step "Building signed release AAB"
 Set-Location "$ProjectPath\android"
 
+# Force stop daemons to prevent file locking
+& .\gradlew.bat --stop
+
+# Run clean before bundle
+& .\gradlew.bat clean
+
 $aab = "$ProjectPath\android\app\build\outputs\bundle\release\app-release.aab"
 if (Test-Path $aab) {
     Remove-Item $aab -Force

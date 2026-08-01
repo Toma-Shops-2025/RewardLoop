@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { isNativeApp, signInWithGoogleNative } from "@/lib/native-auth";
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/signup")({ component: Signup });
 function Signup() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "", referral: "" });
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -103,15 +105,27 @@ function Signup() {
             { key: "password", label: "Password", type: "password" },
             { key: "referral", label: "Referral Code (optional)", type: "text" },
           ].map((f) => (
-            <label key={f.key} className="block">
+            <label key={f.key} className="block relative">
               <span className="text-base font-bold text-foreground">{f.label}</span>
               <input
-                type={f.type}
+                type={f.key === 'password' ? (showPass ? "text" : "password") : f.type}
                 required={f.key !== "referral"}
                 value={form[f.key as keyof typeof form]}
                 onChange={set(f.key as keyof typeof form)}
-                className="mt-2 w-full bg-transparent border-b border-border py-2 outline-none focus:border-brand text-foreground"
+                className={cn(
+                    "mt-2 w-full bg-transparent border-b border-border py-2 outline-none focus:border-brand text-foreground",
+                    f.key === 'password' && "pr-10"
+                )}
               />
+              {f.key === 'password' && (
+                <button
+                    type="button"
+                    onClick={() => setShowPass(!showPass)}
+                    className="absolute right-0 bottom-2 p-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              )}
             </label>
           ))}
 

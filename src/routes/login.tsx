@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/rewardloop-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -13,6 +13,7 @@ function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -107,18 +108,25 @@ function Login() {
               className="mt-2 w-full bg-transparent border-b border-border py-2 outline-none focus:border-brand text-foreground"
             />
           </label>
-          <label className="block">
+          <label className="block relative">
             <span className="text-base font-bold text-foreground">Password</span>
             <input
-              type="password"
+              type={showPass ? "text" : "password"}
               required
               minLength={6}
               autoComplete="current-password"
               value={password}
               onFocus={logFocus("password")}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 w-full bg-transparent border-b border-border py-2 outline-none focus:border-brand text-foreground"
+              className="mt-2 w-full bg-transparent border-b border-border py-2 pr-10 outline-none focus:border-brand text-foreground"
             />
+            <button
+              type="button"
+              onClick={() => setShowPass(!showPass)}
+              className="absolute right-0 bottom-2 p-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </label>
 
           <button type="submit" disabled={loading || googleLoading} className="pill-btn bg-primary text-primary-foreground w-full disabled:opacity-60">

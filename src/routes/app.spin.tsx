@@ -35,37 +35,46 @@ function Spin() {
     setSpinning(true);
     setLastWin(null);
     toast("Loading sponsored content…");
-    const ad = await showRewardedAd();
-    if (!ad.success) { setSpinning(false); return; }
+    try {
+        const ad = await showRewardedAd();
+        if (!ad.success) {
+            toast.error("Ad failed to load. Please try again.");
+            setSpinning(false);
+            return;
+        }
 
-    const { data, error } = await supabase.rpc("claim_spin_reward");
-    if (error || !data) {
-      toast.error(error?.message ?? "Spin failed");
-      setSpinning(false);
-      return;
+        const { data, error } = await supabase.rpc("claim_spin_reward");
+        if (error || !data) {
+            toast.error(error?.message ?? "Spin failed");
+            setSpinning(false);
+            return;
+        }
+        const reward = (data as { segment: number; points: number }).points;
+        // Derive the landing index from `points` so the wheel can NEVER disagree
+        // with the awarded amount, even if a stale build has a different segment
+        // ordering than the DB function.
+        const idx = SEGMENTS.indexOf(reward);
+        const seg = 360 / SEGMENTS.length;
+        // Always spin forward (at least 6 full turns past current angle) so the
+        // wheel never goes backwards between spins.
+        const base = Math.ceil(angle / 360) * 360 + 360 * 6;
+        const target = base + (360 - (idx * seg + seg / 2));
+        setAngle(target);
+
+        setTimeout(async () => {
+            setLastWin(reward);
+            if (reward >= 50) fireConfetti(80);
+            else if (reward >= 20) fireConfetti(40);
+            else fireConfetti(20);
+            toast.success(`🎉 You won ${reward} points!`);
+            await refresh();
+            setSpinning(false);
+            setCooldown(COOLDOWN_SEC);
+        }, 4200);
+    } catch (e: any) {
+        toast.error("Network error");
+        setSpinning(false);
     }
-    const reward = (data as { segment: number; points: number }).points;
-    // Derive the landing index from `points` so the wheel can NEVER disagree
-    // with the awarded amount, even if a stale build has a different segment
-    // ordering than the DB function.
-    const idx = SEGMENTS.indexOf(reward);
-    const seg = 360 / SEGMENTS.length;
-    // Always spin forward (at least 6 full turns past current angle) so the
-    // wheel never goes backwards between spins.
-    const base = Math.ceil(angle / 360) * 360 + 360 * 6;
-    const target = base + (360 - (idx * seg + seg / 2));
-    setAngle(target);
-
-    setTimeout(async () => {
-      setLastWin(reward);
-      if (reward >= 50) fireConfetti(80);
-      else if (reward >= 20) fireConfetti(40);
-      else fireConfetti(20);
-      toast.success(`🎉 You won ${reward} points!`);
-      await refresh();
-      setSpinning(false);
-      setCooldown(COOLDOWN_SEC);
-    }, 4200);
   };
 
   const seg = 360 / SEGMENTS.length;

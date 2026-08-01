@@ -46,6 +46,11 @@ export async function initAds(): Promise<void> {
   });
 }
 
+/** Show a rewarded ad with compatibility alias */
+export async function showRewardedAdWithFallback(): Promise<{ success: boolean }> {
+    return showRewardedAd();
+}
+
 /** Show a rewarded ad */
 export async function showRewardedAd(): Promise<{ success: boolean }> {
   if (!isNative()) {

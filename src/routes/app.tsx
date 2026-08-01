@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tansta
 import { useEffect, useState, useCallback } from "react";
 import { Home, Gamepad2, Users, Wallet, User as UserIcon } from "lucide-react";
 import { useAuth, fetchProfile, type Profile } from "@/lib/auth";
+import { showInterstitial, setBannerVisible } from "@/lib/ads";
 import { supabase } from "@/integrations/supabase/client";
 import { AppContext } from "@/lib/app-context";
 import logo from "@/assets/rewardloop-logo.png";
@@ -45,6 +46,20 @@ function AppLayout() {
     return () => { supabase.removeChannel(channel); };
   }, [user, refresh]);
 
+  useEffect(() => {
+    if (user) {
+        setBannerVisible(true);
+    } else {
+        setBannerVisible(false);
+    }
+  }, [user]);
+
+  const handleTabClick = (to: string) => {
+      if (to === "/app/withdraw" && location.pathname !== "/app/withdraw") {
+          showInterstitial();
+      }
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-brand text-brand-foreground gap-3">
@@ -79,7 +94,11 @@ function AppLayout() {
               const Icon = t.icon;
               return (
                 <li key={t.to}>
-                  <Link to={t.to} className={`relative flex flex-col items-center gap-0.5 py-2.5 transition-colors ${active ? "text-brand" : "text-muted-foreground"}`}>
+                  <Link
+                    to={t.to}
+                    onClick={() => handleTabClick(t.to)}
+                    className={`relative flex flex-col items-center gap-0.5 py-2.5 transition-colors ${active ? "text-brand" : "text-muted-foreground"}`}
+                  >
                     {active && <span className="absolute top-0 h-1 w-8 rounded-b-full bg-brand" style={{ boxShadow: "0 2px 10px oklch(0.85 0.16 200 / 0.7)" }} />}
                     <Icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} />
                     <span className="text-[11px] font-semibold">{t.label}</span>

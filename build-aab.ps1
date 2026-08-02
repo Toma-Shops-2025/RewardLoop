@@ -20,19 +20,17 @@ Step "bun install"
 bun install
 
 Step "Building web app"
-$env:VITE_PLATFORM = "capacitor"
-bun run build
-if ($LASTEXITCODE -ne 0) { throw "Web build failed" }
-$env:VITE_PLATFORM = $null
+if (Test-Path "dist") { Remove-Item "dist" -Recurse -Force }
+npm run build
 
 Step "Regenerating Android launcher icon + splash from resources/"
-bun run assets:generate
+npm run assets:generate
 
 Step "Capacitor sync (Android)"
 if (Test-Path "android/app/src/main/assets/public") {
     Remove-Item "android/app/src/main/assets/public" -Recurse -Force
 }
-bunx cap sync android
+npx cap sync android
 
 if ($BumpVersion) {
     Step "Bumping versionCode"

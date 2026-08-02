@@ -137,6 +137,8 @@ function Login() {
         <Link to="/signup" className="mt-4 block text-center pill-btn bg-card border border-border text-foreground">
           New user? <span className="font-extrabold">Sign Up</span>
         </Link>
+
+        <p className="text-center text-[8px] text-muted-foreground/30 mt-8 uppercase font-bold tracking-tighter">Build v2.1.0-master</p>
       </div>
     </main>
   );

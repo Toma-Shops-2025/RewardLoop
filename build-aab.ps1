@@ -29,6 +29,9 @@ Step "Regenerating Android launcher icon + splash from resources/"
 bun run assets:generate
 
 Step "Capacitor sync (Android)"
+if (Test-Path "android/app/src/main/assets/public") {
+    Remove-Item "android/app/src/main/assets/public" -Recurse -Force
+}
 bunx cap sync android
 
 if ($BumpVersion) {

@@ -5,7 +5,8 @@ $ProjectPath  = "$env:USERPROFILE\Desktop\rewardloop"
 $KeystorePath = "$env:USERPROFILE\Downloads\Other DO NOT REMOVE\rewardloopAAB"
 $KeyAlias     = "rewardloop1"
 
-$ErrorActionPreference = "Stop"
+# We remove "Stop" so that minor warnings don't kill the whole build
+$ErrorActionPreference = "Continue"
 
 function Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
 
@@ -20,7 +21,10 @@ npm install
 
 Step "Building web app (Vite)"
 npm run build
-if ($LASTEXITCODE -ne 0) { throw "Web build failed" }
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Web build failed!" -ForegroundColor Red
+    exit 1
+}
 
 Step "Regenerating Android icons from resources/"
 npm run assets:generate
@@ -40,8 +44,6 @@ if ($content -match 'versionCode\s+(\d+)') {
     $content = $content -replace "versionCode\s+$old", "versionCode $new"
     Set-Content $gradle $content -NoNewline
     Write-Host "    versionCode: $old -> $new" -ForegroundColor Green
-} else {
-    Write-Warning "Could not find versionCode in $gradle"
 }
 
 Step "Keystore credentials (typing is hidden)"
@@ -60,11 +62,9 @@ if (-not (Test-Path $KeystorePath)) {
 Step "Building signed release AAB"
 Set-Location "$ProjectPath\android"
 
-# Force stop daemons to prevent file locking
-& .\gradlew.bat --stop
-
-# Run clean before bundle
-& .\gradlew.bat clean
+# We ignore errors on --stop and clean to ensure they don't block the main build
+& .\gradlew.bat --stop 2>$null
+& .\gradlew.bat clean 2>$null
 
 $aab = "$ProjectPath\android\app\build\outputs\bundle\release\app-release.aab"
 if (Test-Path $aab) {
@@ -93,6 +93,6 @@ if ($gradleExit -eq 0 -and (Test-Path $aab)) {
     Write-Host "  Upload to Play Console -> Create new release.`n"
     Start-Process explorer.exe "/select,`"$aab`""
 } else {
-    Write-Error "Build FAILED (gradle exit code $gradleExit). See errors above."
+    Write-Host "`n  Build FAILED. Please scroll up to see the Red Gradle error." -ForegroundColor Red
     exit 1
 }

@@ -21,16 +21,16 @@ bun install
 
 Step "Building web app"
 if (Test-Path "dist") { Remove-Item "dist" -Recurse -Force }
-npm run build
+bun run build
 
 Step "Regenerating Android launcher icon + splash from resources/"
-npm run assets:generate
+bun run assets:generate
 
 Step "Capacitor sync (Android)"
 if (Test-Path "android/app/src/main/assets/public") {
     Remove-Item "android/app/src/main/assets/public" -Recurse -Force
 }
-npx cap sync android
+bunx cap sync android
 
 if ($BumpVersion) {
     Step "Bumping versionCode"

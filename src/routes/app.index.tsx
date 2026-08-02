@@ -318,7 +318,9 @@ function Home() {
         </section>
       )}
 
-      <p className="text-center text-[8px] text-muted-foreground/30 mt-8 pb-8 uppercase font-bold tracking-tighter">Build v2.1.8-master</p>
+      <p className="text-center text-[10px] text-brand/60 mt-12 pb-12 uppercase font-black tracking-widest animate-pulse">
+        System Ver: 2.2.0-GOLD (FIXED)
+      </p>
     </div>
   );
 }

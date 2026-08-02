@@ -34,6 +34,11 @@ function Spin() {
     if (spinning || cooldown > 0) return;
     setSpinning(true);
     setLastWin(null);
+
+    // Start immediate "fake" spin for visual feedback
+    const startAngle = angle + 360 * 3;
+    setAngle(startAngle);
+
     toast("Loading sponsored content…");
     try {
         const ad = await showRewardedAd();
@@ -50,14 +55,11 @@ function Spin() {
             return;
         }
         const reward = (data as { segment: number; points: number }).points;
-        // Derive the landing index from `points` so the wheel can NEVER disagree
-        // with the awarded amount, even if a stale build has a different segment
-        // ordering than the DB function.
         const idx = SEGMENTS.indexOf(reward);
         const seg = 360 / SEGMENTS.length;
-        // Always spin forward (at least 6 full turns past current angle) so the
-        // wheel never goes backwards between spins.
-        const base = Math.ceil(angle / 360) * 360 + 360 * 6;
+
+        // Calculate final landing spot based on the real reward
+        const base = Math.ceil(startAngle / 360) * 360 + 360 * 3;
         const target = base + (360 - (idx * seg + seg / 2));
         setAngle(target);
 

@@ -47,7 +47,6 @@ function Home() {
   const [todayDone, setTodayDone] = useState({ video: 0, spin: 0, trivia: 0, daily: 0 });
 
   const bonus = isBonusHour();
-  // removed duplicate
   const lvl = levelFor(profile?.total_earned ?? 0);
   const motivation = MOTIVATION[(profile?.login_streak ?? 0) % MOTIVATION.length];
 
@@ -126,7 +125,7 @@ function Home() {
   };
 
   return (
-    <div className="bg-background">
+    <div className="bg-background min-h-screen pb-24">
       <header className="brand-header px-5 pt-5 pb-7">
         <div className="flex items-center gap-3">
           <img src={logo} alt="" width={40} height={40} className="h-10 w-10 rounded-lg" loading="lazy" />
@@ -273,7 +272,7 @@ function Home() {
 
       {/* Recent activity */}
       {recent.length > 0 && (
-        <section className="px-4 pt-6">
+        <section className="px-4 pt-6 pb-12">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Recent Activity</h2>
             <Link to="/app/profile" className="text-xs font-bold text-brand">See all</Link>
@@ -294,14 +293,7 @@ function Home() {
         </section>
       )}
 
-      <div className="mt-6 mx-4 h-16 rounded-xl border border-dashed border-border flex items-center justify-center text-xs text-muted-foreground">
-        Sponsored — Ad area
-      </div>
-
-      <p className="text-[11px] text-muted-foreground text-center mt-3 px-6 pb-2">
-        Reward values may vary based on advertiser availability and your region.{" "}
-        <Link to="/app/how-rewards" className="underline font-semibold">Learn more</Link>
-      </p>
+      <p className="text-center text-[8px] text-muted-foreground/30 mt-8 pb-8 uppercase font-bold tracking-tighter">Build v2.1.0-master</p>
     </div>
   );
 }

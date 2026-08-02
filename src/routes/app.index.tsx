@@ -293,7 +293,7 @@ function Home() {
         </section>
       )}
 
-      <p className="text-center text-[8px] text-muted-foreground/30 mt-8 pb-8 uppercase font-bold tracking-tighter">Build v2.1.0-master</p>
+      <p className="text-center text-[8px] text-muted-foreground/30 mt-8 pb-8 uppercase font-bold tracking-tighter">Build v2.1.8-master</p>
     </div>
   );
 }

@@ -31,12 +31,17 @@ if (Test-Path "android/app/src/main/assets/public") {
 }
 npx cap sync android
 
-Step "Checking versionCode in build.gradle"
+Step "Bumping versionCode in build.gradle"
 $gradle = "android/app/build.gradle"
 $content = Get-Content $gradle -Raw
 if ($content -match 'versionCode\s+(\d+)') {
-    $curr = [int]$Matches[1]
-    Write-Host "    Current versionCode: $curr" -ForegroundColor Yellow
+    $old = [int]$Matches[1]
+    $new = $old + 1
+    $content = $content -replace "versionCode\s+$old", "versionCode $new"
+    Set-Content $gradle $content -NoNewline
+    Write-Host "    versionCode: $old -> $new" -ForegroundColor Green
+} else {
+    Write-Warning "Could not find versionCode in $gradle"
 }
 
 Step "Keystore credentials (typing is hidden)"
@@ -65,7 +70,6 @@ $aab = "$ProjectPath\android\app\build\outputs\bundle\release\app-release.aab"
 if (Test-Path $aab) {
     Remove-Item $aab -Force
 }
-$buildStartedAt = Get-Date
 
 $gradleArgs = @(
     "bundleRelease",
@@ -86,7 +90,6 @@ Set-Location $ProjectPath
 if ($gradleExit -eq 0 -and (Test-Path $aab)) {
     Write-Host "`n  SUCCESS" -ForegroundColor Green
     Write-Host "  Signed AAB: $aab" -ForegroundColor Green
-    Write-Host "  Version: 2.2.0 (GOLD)" -ForegroundColor Yellow
     Write-Host "  Upload to Play Console -> Create new release.`n"
     Start-Process explorer.exe "/select,`"$aab`""
 } else {

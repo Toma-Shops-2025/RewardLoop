@@ -47,6 +47,7 @@ function Home() {
   const [todayDone, setTodayDone] = useState({ video: 0, spin: 0, trivia: 0, daily: 0 });
 
   const bonus = isBonusHour();
+  // removed duplicate
   const lvl = levelFor(profile?.total_earned ?? 0);
   const motivation = MOTIVATION[(profile?.login_streak ?? 0) % MOTIVATION.length];
 

@@ -78,17 +78,22 @@ function Home() {
       );
   }
 
-  const todayDone = Math.min(todayDone.video, 3) + Math.min(todayDone.spin, 1)
+  // 4 daily targets: 3 videos, 1 spin, 1 trivia, 1 daily
+  const dailyDone = Math.min(todayDone.video, 3) + Math.min(todayDone.spin, 1)
     + Math.min(todayDone.trivia, 1) + Math.min(todayDone.daily, 1);
   const dailyTotal = 6;
   const dailyPct = (dailyDone / dailyTotal) * 100;
 
-  // Improved date comparison for Daily Reward
+  // Robust date comparison for Daily Reward
   const checkClaimed = () => {
     if (!profile?.last_login_date) return false;
-    const today = new Date().toISOString().split('T')[0];
-    const lastClaim = new Date(profile.last_login_date).toISOString().split('T')[0];
-    return today === lastClaim;
+    try {
+      const today = new Date().toLocaleDateString();
+      const lastClaim = new Date(profile.last_login_date).toLocaleDateString();
+      return today === lastClaim;
+    } catch (e) {
+      return false;
+    }
   };
   const todayClaimed = checkClaimed();
 

@@ -45,10 +45,23 @@ function Home() {
   const [claiming, setClaiming] = useState(false);
   const [recent, setRecent] = useState<Tx[]>([]);
   const [todayDone, setTodayDone] = useState({ video: 0, spin: 0, trivia: 0, daily: 0 });
+
   const bonus = isBonusHour();
-  const todayClaimed = checkClaimed();
   const lvl = levelFor(profile?.total_earned ?? 0);
   const motivation = MOTIVATION[(profile?.login_streak ?? 0) % MOTIVATION.length];
+
+  // Robust date comparison for Daily Reward
+  const checkClaimed = () => {
+    if (!profile?.last_login_date) return false;
+    try {
+      const today = new Date().toLocaleDateString();
+      const lastClaim = new Date(profile.last_login_date).toLocaleDateString();
+      return today === lastClaim;
+    } catch (e) {
+      return false;
+    }
+  };
+  const todayClaimed = checkClaimed();
 
   useEffect(() => {
     if (!userId) return;
@@ -83,19 +96,6 @@ function Home() {
     + Math.min(todayDone.trivia, 1) + Math.min(todayDone.daily, 1);
   const dailyTotal = 6;
   const dailyPct = (dailyDone / dailyTotal) * 100;
-
-  // Robust date comparison for Daily Reward
-  const checkClaimed = () => {
-    if (!profile?.last_login_date) return false;
-    try {
-      const today = new Date().toLocaleDateString();
-      const lastClaim = new Date(profile.last_login_date).toLocaleDateString();
-      return today === lastClaim;
-    } catch (e) {
-      return false;
-    }
-  };
-  const todayClaimed = checkClaimed();
 
   const claimReward = async () => {
     if (watching) return;

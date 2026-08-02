@@ -38,6 +38,23 @@ const TX_LABEL: Record<string, string> = {
   withdrawal: "Redemption",
 };
 
+/**
+ * Helper to wait for the app to regain focus after an ad.
+ * This is crucial for Android because background requests are often killed.
+ */
+async function waitForReturn() {
+    if (!Capacitor.isNativePlatform()) return;
+    return new Promise((resolve) => {
+        const handler = () => {
+            if (document.visibilityState === 'visible') {
+                document.removeEventListener('visibilitychange', handler);
+                setTimeout(resolve, 600); // Small buffer to let the UI breathe
+            }
+        };
+        document.addEventListener('visibilitychange', handler);
+    });
+}
+
 function Home() {
   const { profile, userId, refresh, loading } = useApp();
   const navigate = useNavigate();
@@ -57,9 +74,7 @@ function Home() {
       const today = new Date().toLocaleDateString();
       const lastClaim = new Date(profile.last_login_date).toLocaleDateString();
       return today === lastClaim;
-    } catch (e) {
-      return false;
-    }
+    } catch (e) { return false; }
   };
   const todayClaimed = checkClaimed();
 
@@ -100,17 +115,27 @@ function Home() {
   const claimReward = async () => {
     if (watching) return;
     setWatching(true);
-    toast("Loading sponsored content…");
+    toast("Loading sponsor video...");
     try {
       const res = await showRewardedAd();
-      if (!res.success) { toast.error("Reward not granted — engagement incomplete"); return; }
+      if (!res.success) {
+        toast.error("Ad not ready. Try again in a moment.");
+        setWatching(false);
+        return;
+      }
+
+      // WAIT FOR USER TO RETURN
+      await waitForReturn();
+
       const { error } = await supabase.rpc("claim_video_reward");
       if (error) throw error;
+
       fireConfetti(40);
       toast.success("Reward points granted!");
       await refresh();
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to grant reward");
+      console.error(e);
+      toast.error("Failed to grant reward. Please check connection.");
     } finally { setWatching(false); }
   };
 

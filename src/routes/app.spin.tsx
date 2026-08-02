@@ -7,11 +7,28 @@ import { useApp } from "@/lib/app-context";
 import { supabase } from "@/integrations/supabase/client";
 import { showRewardedAd } from "@/lib/ads";
 import { fireConfetti } from "@/lib/confetti";
+import { Capacitor } from "@capacitor/core";
 
 export const Route = createFileRoute("/app/spin")({ component: Spin });
 
 const SEGMENTS = [2, 5, 3, 10, 2, 15, 5, 8];
 const COOLDOWN_SEC = 30;
+
+/**
+ * Helper to wait for the app to regain focus after an ad.
+ */
+async function waitForReturn() {
+    if (!Capacitor.isNativePlatform()) return;
+    return new Promise((resolve) => {
+        const handler = () => {
+            if (document.visibilityState === 'visible') {
+                document.removeEventListener('visibilitychange', handler);
+                setTimeout(resolve, 600);
+            }
+        };
+        document.addEventListener('visibilitychange', handler);
+    });
+}
 
 function Spin() {
   const { profile, refresh } = useApp();
@@ -21,8 +38,7 @@ function Spin() {
   const [cooldown, setCooldown] = useState(0);
   const [lastWin, setLastWin] = useState<number | null>(null);
 
-  // Refresh balance on entry so the header always reflects latest points
-  useEffect(() => { refresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { refresh(); }, []);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -35,63 +51,60 @@ function Spin() {
     setSpinning(true);
     setLastWin(null);
 
-    // Start immediate "fake" spin for visual feedback
-    const startAngle = angle + 360 * 3;
-    setAngle(startAngle);
+    // START VISUAL FEEDBACK (A slow "loading" rotation)
+    const previewAngle = angle + 360 * 2;
+    setAngle(previewAngle);
 
-    toast("Loading sponsored content…");
+    toast("Loading sponsor clip...");
     try {
         const ad = await showRewardedAd();
         if (!ad.success) {
-            toast.error("Ad failed to load. Please try again.");
+            toast.error("Ad not ready yet. Please try again.");
             setSpinning(false);
             return;
         }
 
+        // WAIT FOR USER TO RETURN FROM AD
+        await waitForReturn();
+
         const { data, error } = await supabase.rpc("claim_spin_reward");
         if (error || !data) {
-            toast.error(error?.message ?? "Spin failed");
+            toast.error(error?.message ?? "Spin failed. Check connection.");
             setSpinning(false);
             return;
         }
+
         const reward = (data as { segment: number; points: number }).points;
         const idx = SEGMENTS.indexOf(reward);
         const seg = 360 / SEGMENTS.length;
 
-        // Calculate final landing spot based on the real reward
-        const base = Math.ceil(startAngle / 360) * 360 + 360 * 3;
-        const target = base + (360 - (idx * seg + seg / 2));
+        // CALCULATE FINAL LANDING (Landing in middle of segment)
+        const base = Math.ceil(previewAngle / 360) * 360 + 360 * 4;
+        const target = base + (360 - (idx * seg + (seg / 2)));
         setAngle(target);
 
         setTimeout(async () => {
             setLastWin(reward);
-            if (reward >= 50) fireConfetti(80);
-            else if (reward >= 20) fireConfetti(40);
-            else fireConfetti(20);
+            fireConfetti(reward >= 15 ? 60 : 25);
             toast.success(`🎉 You won ${reward} points!`);
             await refresh();
             setSpinning(false);
             setCooldown(COOLDOWN_SEC);
         }, 4200);
     } catch (e: any) {
-        toast.error("Network error");
+        console.error(e);
+        toast.error("Something went wrong. Please try again.");
         setSpinning(false);
     }
   };
 
-  const seg = 360 / SEGMENTS.length;
-  const disabled = spinning || cooldown > 0;
-
-  // SVG wheel geometry (viewBox 200x200, center 100,100)
   const VB = 200;
   const C = VB / 2;
-  const R_OUTER = 96;       // segment outer radius
-  const R_INNER = 22;       // hub cutout
-  const R_LABEL = 82;       // label sits near the rim (Wheel-of-Fortune style)
+  const R_OUTER = 96;
+  const R_INNER = 22;
+  const R_LABEL = 82;
   const segDeg = 360 / SEGMENTS.length;
 
-
-  // Build wedge path
   const wedgePath = (i: number) => {
     const start = (i * segDeg - 90) * (Math.PI / 180);
     const end = ((i + 1) * segDeg - 90) * (Math.PI / 180);
@@ -117,10 +130,8 @@ function Spin() {
         <div className="w-6" />
       </header>
 
-      {/* Neon stage */}
       <div className="neon-stage mx-4 mt-6 rounded-3xl p-6 border border-white/5">
         <div className="relative mx-auto h-72 w-72">
-          {/* Pointer */}
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-bob">
             <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden>
               <defs>
@@ -134,65 +145,32 @@ function Spin() {
             </svg>
           </div>
 
-          {/* Glowing halo (static, behind wheel) */}
           <div className="absolute inset-0 rounded-full neon-pulse" />
 
-          {/* Wheel */}
           <div
             className="absolute inset-0 rounded-full"
             style={{
               transform: `rotate(${angle}deg)`,
-              transition: "transform 4s cubic-bezier(0.17, 0.67, 0.18, 1)",
+              transition: spinning ? "transform 4s cubic-bezier(0.17, 0.67, 0.18, 1)" : "transform 0.5s ease-out",
             }}
           >
             <svg viewBox={`0 0 ${VB} ${VB}`} className="w-full h-full">
-              <defs>
-                <radialGradient id="rim" cx="50%" cy="50%" r="50%">
-                  <stop offset="92%" stopColor="oklch(0.30 0.05 270)" />
-                  <stop offset="100%" stopColor="oklch(0.10 0.05 270)" />
-                </radialGradient>
-              </defs>
               {/* Outer rim */}
-              <circle cx={C} cy={C} r={R_OUTER + 3} fill="url(#rim)" />
-              <circle cx={C} cy={C} r={R_OUTER + 1} fill="none"
-                stroke="oklch(0.85 0.16 200)" strokeWidth="0.6" opacity="0.85" />
-
-              {/* Wedges */}
+              <circle cx={C} cy={C} r={R_OUTER + 3} fill="#1a1a2e" />
               {SEGMENTS.map((p, i) => (
                 <path
                   key={`w${i}`}
                   d={wedgePath(i)}
                   fill={i % 2 === 0 ? "var(--wheel-segment-a)" : "var(--wheel-segment-b)"}
-                  stroke={i % 2 === 0 ? "oklch(0.78 0.19 55 / 0.9)" : "oklch(0.85 0.16 200 / 0.9)"}
+                  stroke="rgba(255,255,255,0.1)"
                   strokeWidth="0.8"
                 />
               ))}
-
-              {/* Radial labels (Wheel of Fortune style — number reads outward,
-                  top of digit toward the rim). */}
               {SEGMENTS.map((p, i) => {
                 const midDeg = i * segDeg + segDeg / 2;
                 return (
-                  <g
-                    key={`t${i}`}
-                    transform={`rotate(${midDeg} ${C} ${C}) translate(${C} ${C - R_LABEL})`}
-                  >
-                    <text
-                      x="0"
-                      y="0"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fill="#0b0b14"
-                      stroke="white"
-                      strokeWidth="0.6"
-                      paintOrder="stroke"
-                      style={{
-                        fontSize: 18,
-                        fontWeight: 900,
-                        fontFamily: "ui-sans-serif, system-ui",
-                        letterSpacing: "-0.02em",
-                      }}
-                    >
+                  <g key={`t${i}`} transform={`rotate(${midDeg} ${C} ${C}) translate(${C} ${C - R_LABEL})`}>
+                    <text x="0" y="0" textAnchor="middle" dominantBaseline="middle" fill="#0b0b14" stroke="white" strokeWidth="0.6" paintOrder="stroke" style={{ fontSize: 18, fontWeight: 900 }}>
                       {p}
                     </text>
                   </g>
@@ -201,7 +179,6 @@ function Spin() {
             </svg>
           </div>
 
-          {/* Center hub */}
           <div className="absolute inset-0 m-auto h-14 w-14 rounded-full flex items-center justify-center z-10"
             style={{
               background: "radial-gradient(circle at 30% 30%, oklch(0.30 0.05 270), oklch(0.12 0.05 270))",
@@ -210,34 +187,19 @@ function Spin() {
             <Sparkles className="h-6 w-6" style={{ color: "oklch(0.85 0.16 200)" }} />
           </div>
         </div>
-
-        {lastWin !== null && !spinning && (
-          <div className="mx-auto mt-5 text-center reward-pop">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-bold">You won</p>
-            <p className="inline-block mt-1 px-4 py-1.5 rounded-full text-2xl font-extrabold text-white"
-              style={{
-                background: "var(--gradient-neon)",
-                boxShadow: "0 0 20px oklch(0.85 0.16 200 / 0.6)",
-              }}>
-              +{lastWin} PTS
-            </p>
-          </div>
-        )}
-
         <p className="text-center text-[10px] uppercase tracking-[0.2em] text-white/50 mt-4">All values in points</p>
       </div>
 
       <div className="px-6 mt-6">
-        <button onClick={spin} disabled={disabled}
+        <button onClick={spin} disabled={spinning || cooldown > 0}
           className="pill-btn w-full text-lg text-white disabled:opacity-60 flex items-center justify-center gap-2"
           style={{
-            background: disabled ? "oklch(0.30 0.03 265)" : "var(--gradient-neon)",
-            boxShadow: disabled ? "none" : "0 0 24px oklch(0.85 0.16 200 / 0.55)",
+            background: (spinning || cooldown > 0) ? "oklch(0.30 0.03 265)" : "var(--gradient-neon)",
+            boxShadow: (spinning || cooldown > 0) ? "none" : "0 0 24px oklch(0.85 0.16 200 / 0.55)",
           }}>
           {spinning ? "Spinning…" : cooldown > 0 ? (<><Clock className="h-5 w-5" /> Wait {cooldown}s</>) : "SPIN NOW"}
         </button>
         <p className="text-center text-xs text-muted-foreground mt-3">A short sponsored clip plays before the spin.</p>
-        <p className="text-center text-[11px] text-muted-foreground mt-1">Reward values may vary. Every spin grants points — no losses.</p>
       </div>
     </div>
   );

@@ -68,9 +68,9 @@ export async function showRewardedAd(): Promise<{ success: boolean }> {
     window.applovin.isRewardedAdReady(REWARDED_AD_UNIT_ID, (isReady: boolean) => {
       if (isReady) {
         window.applovin.showRewardedAd(REWARDED_AD_UNIT_ID);
-        // Resolve after a shorter delay so the UI feels responsive
-        // The points will be awarded in the background
-        setTimeout(() => resolve({ success: true }), 2000);
+        // We resolve quickly so the app can prepare, but we handle the
+        // actual point awarding after the app regains focus in the UI.
+        setTimeout(() => resolve({ success: true }), 1000);
       } else {
         window.applovin.loadRewardedAd(REWARDED_AD_UNIT_ID);
         resolve({ success: false });

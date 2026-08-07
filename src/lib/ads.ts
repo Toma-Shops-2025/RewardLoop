@@ -11,21 +11,15 @@ declare global {
   }
 }
 
-let isInitializing = false;
-let isInitialized = false;
-
 /** Initialize and Load Ads */
 export async function initAds(): Promise<void> {
-  if (!isNative() || isInitialized || isInitializing) return;
-  isInitializing = true;
+  if (!isNative()) return;
 
   const startInit = () => {
     if (window.unityads) {
       window.unityads.initialize(UNITY_GAME_ID, false, () => {
         console.log("✅ Unity Ads Ready - RewardLoop");
-        isInitialized = true;
-        isInitializing = false;
-        // Pre-load units
+        // Pre-load units immediately
         window.unityads.load("Rewarded_Android");
         window.unityads.load("Interstitial_Android");
         window.unityads.load("Banner_Android");
@@ -46,7 +40,7 @@ export async function showRewardedAd(): Promise<{ success: boolean }> {
 
   return new Promise((resolve) => {
     if (!window.unityads) {
-      toast.error("Ad Engine starting... please wait");
+      toast.error("Ad Engine starting... try again in 5 seconds");
       initAds();
       resolve({ success: false });
       return;
@@ -82,7 +76,7 @@ export async function showInterstitial(): Promise<void> {
 export function setBannerVisible(visible: boolean): void {
     if (!isNative() || !window.unityads) return;
     if (visible) {
-        window.unityads.showBanner("Banner_Android");
+        window.unityads.showBanner("Banner_Android", 1); // 1 = Bottom
     } else {
         window.unityads.hideBanner();
     }

@@ -46,7 +46,6 @@ function Spin() {
     if (spinning || cooldown > 0) return;
     setSpinning(true);
 
-    // Initial slow spin
     const startAngle = angle + 360 * 2;
     setAngle(startAngle);
 
@@ -66,18 +65,11 @@ function Spin() {
             return;
         }
 
-        const spinData = data as { segment_index?: number; points: number };
+        const spinData = data as { segment?: number; points: number };
         const reward = spinData.points;
-
-        // FIND EXACT POSITION
-        // We use the segment_index if returned, else find the first match
-        const segmentIndex = (typeof spinData.segment_index === 'number')
-            ? spinData.segment_index
-            : SEGMENTS.indexOf(reward);
+        const segmentIndex = (typeof spinData.segment === 'number') ? spinData.segment : SEGMENTS.indexOf(reward);
 
         const segDeg = 360 / SEGMENTS.length;
-
-        // Math: Full rotations + Offset to center of slice
         const baseSpins = Math.ceil(startAngle / 360) * 360 + 360 * 5;
         const segmentOffset = 360 - (segmentIndex * segDeg + (segDeg / 2));
         const finalAngle = baseSpins + segmentOffset;
@@ -117,67 +109,65 @@ function Spin() {
     return `M ${xi1} ${yi1} L ${x1} ${y1} A ${R_OUTER} ${R_OUTER} 0 0 1 ${x2} ${y2} L ${xi2} ${yi2} A ${R_INNER} ${R_INNER} 0 0 0 ${xi1} ${yi1} Z`;
   };
 
+  const WEDGE_COLORS = [ "#3b82f6", "#8b5cf6", "#ec4899", "#f97316", "#06b6d4", "#6366f1", "#10b981", "#eab308" ];
+
   return (
-    <div className="bg-background min-h-full pb-12 overflow-hidden">
-      <header className="brand-header px-5 py-5 flex items-center gap-3">
-        <button onClick={() => navigate({ to: "/app" })} className="text-brand-foreground"><ArrowLeft className="h-6 w-6" /></button>
+    <div className="bg-background min-h-full pb-12 overflow-hidden flex flex-col">
+      <header className="bg-brand px-5 py-6 flex items-center gap-3 shadow-lg">
+        <button onClick={() => navigate({ to: "/app" })} className="text-white"><ArrowLeft className="h-6 w-6" /></button>
         <div className="flex-1 text-center">
-          <h1 className="text-xl font-black text-brand-foreground uppercase tracking-tighter">Reward Wheel</h1>
+          <h1 className="text-xl font-black text-white uppercase tracking-tighter">Reward Wheel</h1>
         </div>
         <div className="w-6" />
       </header>
 
-      <div className="mx-4 mt-12 rounded-[3rem] p-10 bg-white/5 border border-white/10 backdrop-blur-xl relative">
-        <div className="relative mx-auto h-72 w-72">
-          {/* Pointer */}
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-30 drop-shadow-lg">
-            <svg width="40" height="40" viewBox="0 0 40 40">
-              <path d="M20 35 L5 5 L35 5 Z" fill="white" stroke="black" strokeWidth="1" />
-            </svg>
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+          <div className="mx-auto rounded-[3rem] p-10 bg-slate-950 border-4 border-white/10 shadow-2xl relative">
+            <div className="relative mx-auto h-72 w-72">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-30 drop-shadow-lg">
+                <svg width="40" height="40" viewBox="0 0 40 40">
+                  <path d="M20 35 L5 5 L35 5 Z" fill="white" stroke="black" strokeWidth="1" />
+                </svg>
+              </div>
+
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  transform: `rotate(${angle}deg)`,
+                  transition: spinning ? "transform 4s cubic-bezier(0.15, 0, 0.15, 1)" : "none",
+                }}
+              >
+                <svg viewBox={`0 0 ${VB} ${VB}`} className="w-full h-full">
+                  {SEGMENTS.map((p, i) => (
+                    <path key={`w${i}`} d={wedgePath(i)} fill={WEDGE_COLORS[i]} stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+                  ))}
+                  {SEGMENTS.map((p, i) => {
+                    const midDeg = i * segDeg + segDeg / 2;
+                    return (
+                      <g key={`t${i}`} transform={`rotate(${midDeg} ${C} ${C}) translate(${C} ${C - R_LABEL})`}>
+                        <text x="0" y="0" textAnchor="middle" dominantBaseline="middle" fill="white" style={{ fontSize: 18, fontWeight: 900, filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.5))' }}>
+                          {p}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+
+              <div className="absolute inset-0 m-auto h-16 w-16 rounded-full flex items-center justify-center z-10 bg-white shadow-2xl border-4 border-slate-950">
+                <Sparkles className="h-6 w-6 text-brand" />
+              </div>
+            </div>
           </div>
 
-          <div
-            className="absolute inset-0 rounded-full shadow-[0_0_50px_rgba(255,255,255,0.1)]"
-            style={{
-              transform: `rotate(${angle}deg)`,
-              transition: spinning ? "transform 4s cubic-bezier(0.15, 0, 0.15, 1)" : "none",
-            }}
-          >
-            <svg viewBox={`0 0 ${VB} ${VB}`} className="w-full h-full">
-              {SEGMENTS.map((p, i) => (
-                <path
-                  key={`w${i}`}
-                  d={wedgePath(i)}
-                  fill={i % 2 === 0 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)"}
-                  stroke="rgba(255,255,255,0.2)"
-                  strokeWidth="0.5"
-                />
-              ))}
-              {SEGMENTS.map((p, i) => {
-                const midDeg = i * segDeg + segDeg / 2;
-                return (
-                  <g key={`t${i}`} transform={`rotate(${midDeg} ${C} ${C}) translate(${C} ${C - R_LABEL})`}>
-                    <text x="0" y="0" textAnchor="middle" dominantBaseline="middle" fill="white" style={{ fontSize: 16, fontWeight: 900 }}>
-                      {p}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
+          <div className="w-full max-w-sm px-6 mt-12 text-center">
+            <button onClick={spin} disabled={spinning || cooldown > 0}
+              className="w-full bg-brand text-white py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all disabled:opacity-40 text-xl"
+            >
+              {spinning ? "Spinning..." : cooldown > 0 ? `Wait ${cooldown}s` : "SPIN NOW"}
+            </button>
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-4">1 Video Ad = 1 Spin</p>
           </div>
-
-          <div className="absolute inset-0 m-auto h-16 w-16 rounded-full flex items-center justify-center z-10 bg-black border-2 border-white/20 shadow-2xl">
-            <Sparkles className="h-6 w-6 text-yellow-400" />
-          </div>
-        </div>
-      </div>
-
-      <div className="px-6 mt-12">
-        <button onClick={spin} disabled={spinning || cooldown > 0}
-          className="w-full bg-white text-black py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all disabled:opacity-40 text-xl"
-        >
-          {spinning ? "Spinning..." : cooldown > 0 ? `Wait ${cooldown}s` : "SPIN FOR LOOT"}
-        </button>
       </div>
     </div>
   );

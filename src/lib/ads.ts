@@ -1,10 +1,8 @@
-// RewardLoop - Unity Ads Integration
+// RewardLoop - High Reliability Ad Engine
 import { Capacitor } from "@capacitor/core";
 import { toast } from "sonner";
 
 const isNative = () => Capacitor.isNativePlatform();
-
-// YOUR REAL UNITY GAME ID for RewardLoop
 const UNITY_GAME_ID = "6168867";
 
 declare global {
@@ -13,14 +11,20 @@ declare global {
   }
 }
 
-/** Initialize Unity Ads SDK */
+let isInitializing = false;
+let isInitialized = false;
+
+/** Initialize and Load Ads */
 export async function initAds(): Promise<void> {
-  if (!isNative()) return;
+  if (!isNative() || isInitialized || isInitializing) return;
+  isInitializing = true;
 
   const startInit = () => {
     if (window.unityads) {
       window.unityads.initialize(UNITY_GAME_ID, false, () => {
         console.log("✅ Unity Ads Ready - RewardLoop");
+        isInitialized = true;
+        isInitializing = false;
         // Pre-load units
         window.unityads.load("Rewarded_Android");
         window.unityads.load("Interstitial_Android");
@@ -33,7 +37,7 @@ export async function initAds(): Promise<void> {
   else document.addEventListener("deviceready", startInit, { once: true });
 }
 
-/** Show a rewarded ad */
+/** Show a rewarded ad with Auto-Reload */
 export async function showRewardedAd(): Promise<{ success: boolean }> {
   if (!isNative()) {
     toast.info("Simulating Ad...");
@@ -42,14 +46,16 @@ export async function showRewardedAd(): Promise<{ success: boolean }> {
 
   return new Promise((resolve) => {
     if (!window.unityads) {
-      toast.error("Ad Engine not ready");
+      toast.error("Ad Engine starting... please wait");
       initAds();
       resolve({ success: false });
       return;
     }
 
     window.unityads.show("Rewarded_Android", (res: any) => {
+      // Reload next ad immediately
       window.unityads.load("Rewarded_Android");
+
       if (res === "COMPLETED") {
         resolve({ success: true });
       } else {
@@ -72,18 +78,15 @@ export async function showInterstitial(): Promise<void> {
     });
 }
 
-/** Legacy banner control */
+/** Banner control */
 export function setBannerVisible(visible: boolean): void {
     if (!isNative() || !window.unityads) return;
-    if (visible) window.unityads.showBanner("Banner_Android");
-    else window.unityads.hideBanner();
+    if (visible) {
+        window.unityads.showBanner("Banner_Android");
+    } else {
+        window.unityads.hideBanner();
+    }
 }
 
-/** New banner exports to fix Netlify build */
-export async function showBannerAd(): Promise<void> {
-    setBannerVisible(true);
-}
-
-export async function hideBannerAd(): Promise<void> {
-    setBannerVisible(false);
-}
+export async function showBannerAd(): Promise<void> { setBannerVisible(true); }
+export async function hideBannerAd(): Promise<void> { setBannerVisible(false); }

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Clock, Sparkles } from "lucide-react";
+import { ArrowLeft, Clock, Sparkles, Loader2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-context";
@@ -45,9 +45,7 @@ function Spin() {
   const spin = async () => {
     if (spinning || cooldown > 0) return;
     setSpinning(true);
-
-    const startAngle = angle + 360 * 2;
-    setAngle(startAngle);
+    setAngle(prev => prev + 180);
 
     try {
         const ad = await showRewardedAd();
@@ -67,12 +65,11 @@ function Spin() {
 
         const spinData = data as { segment?: number; points: number };
         const reward = spinData.points;
-
-        // Accurate segment finding from Database index
         const segmentIndex = (typeof spinData.segment === 'number') ? spinData.segment : SEGMENTS.indexOf(reward);
 
         const segDeg = 360 / SEGMENTS.length;
-        const baseSpins = Math.ceil(startAngle / 360) * 360 + (360 * 6);
+        const currentRotation = angle;
+        const baseSpins = Math.ceil(currentRotation / 360) * 360 + (360 * 6);
         const segmentOffset = 360 - (segmentIndex * segDeg + (segDeg / 2));
         const finalAngle = baseSpins + segmentOffset;
 
@@ -114,8 +111,8 @@ function Spin() {
   const WEDGE_COLORS = [ "#3b82f6", "#8b5cf6", "#ec4899", "#f97316", "#06b6d4", "#6366f1", "#10b981", "#eab308" ];
 
   return (
-    <div className="bg-background min-h-full pb-12 overflow-hidden flex flex-col">
-      <header className="bg-brand px-5 py-6 flex items-center gap-3 shadow-lg">
+    <div className="bg-[#020617] min-h-screen pb-12 overflow-hidden flex flex-col text-white">
+      <header className="bg-slate-900 px-5 py-6 flex items-center gap-3 shadow-2xl border-b border-white/5">
         <button onClick={() => navigate({ to: "/app" })} className="text-white"><ArrowLeft className="h-6 w-6" /></button>
         <div className="flex-1 text-center">
           <h1 className="text-xl font-black text-white uppercase tracking-tighter">Reward Wheel</h1>
@@ -124,7 +121,7 @@ function Spin() {
       </header>
 
       <div className="flex-1 flex flex-col items-center justify-center p-4">
-          <div className="mx-auto rounded-[3.5rem] p-12 bg-slate-950 border-8 border-white/5 shadow-2xl relative scale-110">
+          <div className="mx-auto rounded-[3.5rem] p-10 bg-slate-950 border-4 border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative scale-110">
             <div className="relative mx-auto h-72 w-72">
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-30 drop-shadow-2xl">
                 <svg width="48" height="48" viewBox="0 0 48 48">
@@ -157,18 +154,18 @@ function Spin() {
               </div>
 
               <div className="absolute inset-0 m-auto h-16 w-16 rounded-full flex items-center justify-center z-10 bg-white shadow-2xl border-4 border-slate-950">
-                <Sparkles className="h-6 w-6 text-brand" />
+                <Sparkles className="h-6 w-6 text-[#f97316]" />
               </div>
             </div>
           </div>
 
           <div className="w-full max-w-sm px-6 mt-16 text-center">
             <button onClick={spin} disabled={spinning || cooldown > 0}
-              className="w-full bg-brand text-white py-6 rounded-full font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all disabled:opacity-40 text-xl"
+              className="w-full bg-white text-black py-6 rounded-full font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all disabled:opacity-40 text-xl"
             >
               {spinning ? "Spinning..." : cooldown > 0 ? `Wait ${cooldown}s` : "SPIN NOW"}
             </button>
-            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-6">Watch Ad to unlock Spin</p>
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-6 italic">1 Video Ad = 1 Spin</p>
           </div>
       </div>
     </div>

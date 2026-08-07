@@ -3,8 +3,6 @@ import { Capacitor } from "@capacitor/core";
 import { toast } from "sonner";
 
 const isNative = () => Capacitor.isNativePlatform();
-
-// YOUR REAL UNITY GAME ID for RewardLoop
 const UNITY_GAME_ID = "6168867";
 
 declare global {
@@ -17,32 +15,19 @@ declare global {
 export async function initAds(): Promise<void> {
   if (!isNative()) return;
 
-  return new Promise((resolve) => {
-    const checkPlugin = () => {
-      if (window.unityads) {
-        // false = Test Mode OFF (Real Ads ON)
-        window.unityads.initialize(UNITY_GAME_ID, false, () => {
-          console.log("✅ Unity Ads Initialized - RewardLoop");
-          resolve();
-        });
-      } else {
-        document.addEventListener("deviceready", () => {
-          if (window.unityads) {
-            window.unityads.initialize(UNITY_GAME_ID, false, () => {
-                console.log("✅ Unity Ads Initialized (deviceready) - RewardLoop");
-                resolve();
-            });
-          }
-        }, { once: true });
-      }
-    };
-    checkPlugin();
-  });
-}
+  const startInit = () => {
+    if (window.unityads) {
+      window.unityads.initialize(UNITY_GAME_ID, false, () => {
+        console.log("✅ Unity Ads Initialized - RewardLoop");
+        // Pre-load units for better performance
+        window.unityads.load("Rewarded_Android");
+        window.unityads.load("Interstitial_Android");
+      });
+    }
+  };
 
-/** Show a rewarded ad with compatibility alias */
-export async function showRewardedAdWithFallback(): Promise<{ success: boolean }> {
-    return showRewardedAd();
+  if (window.unityads) startInit();
+  else document.addEventListener("deviceready", startInit, { once: true });
 }
 
 /** Show a rewarded ad */
@@ -55,13 +40,16 @@ export async function showRewardedAd(): Promise<{ success: boolean }> {
 
   return new Promise((resolve) => {
     if (!window.unityads) {
-      toast.error("Ad Engine not ready");
+      toast.error("Ad Engine not ready. Try again in a moment.");
+      initAds(); // Attempt to re-init
       resolve({ success: false });
       return;
     }
 
-    // "Rewarded_Android" is the default Ad Unit name in Unity
     window.unityads.show("Rewarded_Android", (res: any) => {
+      // Reload next ad
+      window.unityads.load("Rewarded_Android");
+
       if (res === "COMPLETED") {
         resolve({ success: true });
       } else {
@@ -72,12 +60,17 @@ export async function showRewardedAd(): Promise<{ success: boolean }> {
   });
 }
 
+/** Compatibility alias */
+export async function showRewardedAdWithFallback(): Promise<{ success: boolean }> {
+    return showRewardedAd();
+}
+
 /** Show an interstitial ad */
 export async function showInterstitial(): Promise<void> {
     if (!isNative() || !window.unityads) return;
-
-    // "Interstitial_Android" is the default Ad Unit name in Unity
-    window.unityads.show("Interstitial_Android");
+    window.unityads.show("Interstitial_Android", () => {
+        window.unityads.load("Interstitial_Android");
+    });
 }
 
 /** Show/Hide Banner Ad */

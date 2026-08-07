@@ -46,14 +46,13 @@ function Spin() {
     if (spinning || cooldown > 0) return;
     setSpinning(true);
 
-    const previewAngle = angle + 360 * 2;
-    setAngle(previewAngle);
+    // Initial slow spin
+    const startAngle = angle + 360 * 2;
+    setAngle(startAngle);
 
-    toast("Loading sponsor clip...");
     try {
         const ad = await showRewardedAd();
         if (!ad.success) {
-            toast.error("Ad not ready yet. Please try again.");
             setSpinning(false);
             return;
         }
@@ -62,37 +61,37 @@ function Spin() {
 
         const { data, error } = await supabase.rpc("claim_spin_reward");
         if (error || !data) {
-            toast.error(error?.message ?? "Spin failed. Check connection.");
+            toast.error(error?.message ?? "Connection error");
             setSpinning(false);
             return;
         }
 
-        // IMPROVED ACCURACY: Use segment index from DB if available, else find first match
-        const spinData = data as { segment?: number; points: number };
+        const spinData = data as { segment_index?: number; points: number };
         const reward = spinData.points;
-        const segmentIndex = (typeof spinData.segment === 'number')
-            ? spinData.segment
+
+        // FIND EXACT POSITION
+        // We use the segment_index if returned, else find the first match
+        const segmentIndex = (typeof spinData.segment_index === 'number')
+            ? spinData.segment_index
             : SEGMENTS.indexOf(reward);
 
         const segDeg = 360 / SEGMENTS.length;
 
-        // Calculate rotation: full spins + offset to segment center
-        const baseSpins = Math.ceil(previewAngle / 360) * 360 + 360 * 5;
+        // Math: Full rotations + Offset to center of slice
+        const baseSpins = Math.ceil(startAngle / 360) * 360 + 360 * 5;
         const segmentOffset = 360 - (segmentIndex * segDeg + (segDeg / 2));
         const finalAngle = baseSpins + segmentOffset;
 
         setAngle(finalAngle);
 
         setTimeout(async () => {
-            fireConfetti(reward >= 15 ? 60 : 25);
-            toast.success(`🎉 You won ${reward} points!`);
+            fireConfetti(reward >= 15 ? 70 : 30);
+            toast.success(`Won ${reward} points!`);
             await refresh();
             setSpinning(false);
             setCooldown(COOLDOWN_SEC);
         }, 4200);
     } catch (e: any) {
-        console.error(e);
-        toast.error("Something went wrong. Please try again.");
         setSpinning(false);
     }
   };
@@ -119,38 +118,37 @@ function Spin() {
   };
 
   return (
-    <div className="bg-background min-h-full pb-12">
+    <div className="bg-background min-h-full pb-12 overflow-hidden">
       <header className="brand-header px-5 py-5 flex items-center gap-3">
         <button onClick={() => navigate({ to: "/app" })} className="text-brand-foreground"><ArrowLeft className="h-6 w-6" /></button>
         <div className="flex-1 text-center">
-          <h1 className="text-xl font-bold text-brand-foreground uppercase tracking-tight">Reward Wheel</h1>
-          <p className="text-brand-foreground/80 text-[10px] font-black uppercase tracking-widest tabular-nums mt-0.5">{(profile?.points ?? 0).toLocaleString()} POINTS</p>
+          <h1 className="text-xl font-black text-brand-foreground uppercase tracking-tighter">Reward Wheel</h1>
         </div>
         <div className="w-6" />
       </header>
 
-      <div className="neon-stage mx-4 mt-6 rounded-[2.5rem] p-8 border border-white/5 bg-white/5 backdrop-blur-md">
+      <div className="mx-4 mt-12 rounded-[3rem] p-10 bg-white/5 border border-white/10 backdrop-blur-xl relative">
         <div className="relative mx-auto h-72 w-72">
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
-            <svg width="36" height="36" viewBox="0 0 36 36">
-              <path d="M18 30 L4 6 L32 6 Z" fill="white" style={{ filter: "drop-shadow(0 0 8px rgba(255,255,255,0.5))" }} />
+          {/* Pointer */}
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-30 drop-shadow-lg">
+            <svg width="40" height="40" viewBox="0 0 40 40">
+              <path d="M20 35 L5 5 L35 5 Z" fill="white" stroke="black" strokeWidth="1" />
             </svg>
           </div>
 
           <div
-            className="absolute inset-0 rounded-full shadow-[0_0_40px_rgba(255,255,255,0.1)]"
+            className="absolute inset-0 rounded-full shadow-[0_0_50px_rgba(255,255,255,0.1)]"
             style={{
               transform: `rotate(${angle}deg)`,
-              transition: spinning ? "transform 4s cubic-bezier(0.15, 0, 0.15, 1)" : "transform 0.5s ease-out",
+              transition: spinning ? "transform 4s cubic-bezier(0.15, 0, 0.15, 1)" : "none",
             }}
           >
             <svg viewBox={`0 0 ${VB} ${VB}`} className="w-full h-full">
-              <circle cx={C} cy={C} r={R_OUTER + 2} fill="white" opacity="0.05" />
               {SEGMENTS.map((p, i) => (
                 <path
                   key={`w${i}`}
                   d={wedgePath(i)}
-                  fill={i % 2 === 0 ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)"}
+                  fill={i % 2 === 0 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)"}
                   stroke="rgba(255,255,255,0.2)"
                   strokeWidth="0.5"
                 />
@@ -168,19 +166,18 @@ function Spin() {
             </svg>
           </div>
 
-          <div className="absolute inset-0 m-auto h-16 w-14 rounded-full flex items-center justify-center z-10 bg-white/10 backdrop-blur-xl border border-white/20">
-            <Sparkles className="h-6 w-6 text-white" />
+          <div className="absolute inset-0 m-auto h-16 w-16 rounded-full flex items-center justify-center z-10 bg-black border-2 border-white/20 shadow-2xl">
+            <Sparkles className="h-6 w-6 text-yellow-400" />
           </div>
         </div>
       </div>
 
-      <div className="px-6 mt-8">
+      <div className="px-6 mt-12">
         <button onClick={spin} disabled={spinning || cooldown > 0}
-          className="w-full bg-white text-black py-5 rounded-3xl font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all disabled:opacity-40 italic"
+          className="w-full bg-white text-black py-6 rounded-[2rem] font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all disabled:opacity-40 text-xl"
         >
-          {spinning ? "SPINNING..." : cooldown > 0 ? `WAIT ${cooldown}S` : "SPIN NOW"}
+          {spinning ? "Spinning..." : cooldown > 0 ? `Wait ${cooldown}s` : "SPIN FOR LOOT"}
         </button>
-        <p className="text-center text-[10px] text-white/30 font-bold uppercase tracking-widest mt-4">Video ad required per spin</p>
       </div>
     </div>
   );

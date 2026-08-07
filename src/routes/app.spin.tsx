@@ -12,7 +12,6 @@ import { Capacitor } from "@capacitor/core";
 export const Route = createFileRoute("/app/spin")({ component: Spin });
 
 const SEGMENTS = [2, 5, 3, 10, 2, 15, 5, 8];
-const WEDGE_COLORS = [ "#3b82f6", "#8b5cf6", "#ec4899", "#f97316", "#06b6d4", "#6366f1", "#10b981", "#eab308" ];
 const COOLDOWN_SEC = 30;
 
 async function waitForReturn() {
@@ -47,8 +46,8 @@ function Spin() {
     if (spinning || cooldown > 0) return;
     setSpinning(true);
 
-    // Initial slow rotation to show it's "loading"
-    setAngle(prev => prev + 180);
+    const startAngle = angle + 360 * 2;
+    setAngle(startAngle);
 
     try {
         const ad = await showRewardedAd();
@@ -68,18 +67,14 @@ function Spin() {
 
         const spinData = data as { segment?: number; points: number };
         const reward = spinData.points;
+
+        // Accurate segment finding from Database index
         const segmentIndex = (typeof spinData.segment === 'number') ? spinData.segment : SEGMENTS.indexOf(reward);
 
         const segDeg = 360 / SEGMENTS.length;
-
-        // RE-CALIBRATED MATH:
-        // We want the wheel to spin at least 6 times, then stop in the center of the segment.
-        // The pointer is at the top (270 degrees in SVG math usually, but we rotate the wheel).
-        // To make segment 0 (the first one) land at the top, we need to rotate by -(0 * segDeg + segDeg/2)
-        const currentRotation = angle;
-        const baseSpins = Math.ceil(currentRotation / 360) * 360 + (360 * 6);
-        const targetOffset = 360 - (segmentIndex * segDeg + (segDeg / 2));
-        const finalAngle = baseSpins + targetOffset;
+        const baseSpins = Math.ceil(startAngle / 360) * 360 + (360 * 6);
+        const segmentOffset = 360 - (segmentIndex * segDeg + (segDeg / 2));
+        const finalAngle = baseSpins + segmentOffset;
 
         setAngle(finalAngle);
 
@@ -89,7 +84,7 @@ function Spin() {
             await refresh();
             setSpinning(false);
             setCooldown(COOLDOWN_SEC);
-        }, 5100); // Wait for the 5s transition
+        }, 5100);
     } catch (e: any) {
         setSpinning(false);
     }
@@ -116,6 +111,8 @@ function Spin() {
     return `M ${xi1} ${yi1} L ${x1} ${y1} A ${R_OUTER} ${R_OUTER} 0 0 1 ${x2} ${y2} L ${xi2} ${yi2} A ${R_INNER} ${R_INNER} 0 0 0 ${xi1} ${yi1} Z`;
   };
 
+  const WEDGE_COLORS = [ "#3b82f6", "#8b5cf6", "#ec4899", "#f97316", "#06b6d4", "#6366f1", "#10b981", "#eab308" ];
+
   return (
     <div className="bg-background min-h-full pb-12 overflow-hidden flex flex-col">
       <header className="bg-brand px-5 py-6 flex items-center gap-3 shadow-lg">
@@ -129,7 +126,6 @@ function Spin() {
       <div className="flex-1 flex flex-col items-center justify-center p-4">
           <div className="mx-auto rounded-[3.5rem] p-12 bg-slate-950 border-8 border-white/5 shadow-2xl relative scale-110">
             <div className="relative mx-auto h-72 w-72">
-              {/* Pointer */}
               <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-30 drop-shadow-2xl">
                 <svg width="48" height="48" viewBox="0 0 48 48">
                   <path d="M24 40 L6 8 L42 8 Z" fill="white" stroke="#000" strokeWidth="2" />
@@ -140,12 +136,12 @@ function Spin() {
                 className="absolute inset-0 rounded-full"
                 style={{
                   transform: `rotate(${angle}deg)`,
-                  transition: spinning ? "transform 5s cubic-bezier(0.2, 0, 0.1, 1)" : "transform 0.5s ease-out",
+                  transition: spinning ? "transform 5s cubic-bezier(0.2, 0, 0.1, 1)" : "none",
                 }}
               >
                 <svg viewBox={`0 0 ${VB} ${VB}`} className="w-full h-full">
                   {SEGMENTS.map((p, i) => (
-                    <path key={`w${i}`} d={wedgePath(i)} fill={WEDGE_COLORS[i]} stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+                    <path key={`w${i}`} d={wedgePath(i)} fill={WEDGE_COLORS[i]} stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
                   ))}
                   {SEGMENTS.map((p, i) => {
                     const midDeg = i * segDeg + segDeg / 2;
@@ -168,11 +164,11 @@ function Spin() {
 
           <div className="w-full max-w-sm px-6 mt-16 text-center">
             <button onClick={spin} disabled={spinning || cooldown > 0}
-              className="w-full bg-brand text-white py-6 rounded-full font-black uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all disabled:opacity-40 text-xl"
+              className="w-full bg-brand text-white py-6 rounded-full font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all disabled:opacity-40 text-xl"
             >
               {spinning ? "Spinning..." : cooldown > 0 ? `Wait ${cooldown}s` : "SPIN NOW"}
             </button>
-            <p className="text-center text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-6">Watch Ad to unlock Spin</p>
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-6">Watch Ad to unlock Spin</p>
           </div>
       </div>
     </div>

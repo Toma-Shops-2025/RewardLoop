@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, useNavigate, Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
-import { Home, Gamepad2, Users, Wallet, User as UserIcon } from "lucide-react";
+import { Home, Gamepad2, Users, Wallet, User as UserIcon, Loader2 } from "lucide-react";
 import { useAuth, fetchProfile, type Profile } from "@/lib/auth";
 import { showInterstitial, setBannerVisible } from "@/lib/ads";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,40 +18,50 @@ const tabs = [
 ] as const;
 
 function AppLayout() {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isSyncing, setIsSyncing] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/login" });
-  }, [user, loading, navigate]);
+    if (!authLoading && !user) navigate({ to: "/login" });
+  }, [user, authLoading, navigate]);
 
   const refresh = useCallback(async () => {
     if (!user) return;
-    setProfile(await fetchProfile(user.id));
+    try {
+        const p = await fetchProfile(user.id);
+        if (p) setProfile(p);
+    } finally {
+        setIsSyncing(false);
+    }
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
     refresh();
+
     const channel = supabase
       .channel(`profile:${user.id}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
-        (payload) => setProfile(payload.new as Profile)
+        (payload) => {
+            console.log("Profile Update:", payload.new);
+            setProfile(payload.new as Profile);
+        }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    return () => {
+        if (channel) supabase.removeChannel(channel);
+    };
   }, [user, refresh]);
 
   useEffect(() => {
-    if (user) {
-        setBannerVisible(true);
-    } else {
-        setBannerVisible(false);
-    }
+    if (user) setBannerVisible(true);
+    else setBannerVisible(false);
   }, [user]);
 
   const handleTabClick = (to: string) => {
@@ -60,17 +70,18 @@ function AppLayout() {
       }
   };
 
-  if (loading || !user) {
+  if (authLoading || !user || (!profile && isSyncing)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-brand text-brand-foreground gap-3">
-        <img src={logo} alt="" width={64} height={64} className="h-16 w-16 rounded-2xl animate-pulse" />
-        <p className="text-sm font-semibold opacity-90">Loading RewardLoop…</p>
+        <img src={logo} alt="" width={64} height={64} className="h-16 w-16 rounded-2xl animate-pulse shadow-2xl" />
+        <p className="text-sm font-black uppercase tracking-widest opacity-90 animate-pulse">Syncing Vault...</p>
+        <Loader2 className="h-6 w-6 animate-spin opacity-50" />
       </div>
     );
   }
 
   return (
-    <AppContext.Provider value={{ profile, userId: user.id, refresh }}>
+    <AppContext.Provider value={{ profile, userId: user.id, refresh, loading: isSyncing }}>
       <div
         className="min-h-screen flex flex-col bg-background"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
@@ -85,23 +96,23 @@ function AppLayout() {
         </main>
 
         <nav
-          className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur border-t border-border card-shadow z-30"
+          className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur-xl border-t border-border card-shadow z-30"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-          <ul className="grid grid-cols-5 max-w-md mx-auto">
+          <ul className="grid grid-cols-5 max-w-md mx-auto h-20">
             {tabs.map((t) => {
-              const active = location.pathname === t.to;
+              const active = location.pathname === t.to || (t.to === '/app' && location.pathname === '/app/');
               const Icon = t.icon;
               return (
-                <li key={t.to}>
+                <li key={t.to} className="flex flex-col items-center justify-center">
                   <Link
                     to={t.to}
                     onClick={() => handleTabClick(t.to)}
-                    className={`relative flex flex-col items-center gap-0.5 py-2.5 transition-colors ${active ? "text-brand" : "text-muted-foreground"}`}
+                    className={`relative flex flex-col items-center gap-1 py-2 transition-all ${active ? "text-brand scale-110" : "text-muted-foreground/60"}`}
                   >
-                    {active && <span className="absolute top-0 h-1 w-8 rounded-b-full bg-brand" style={{ boxShadow: "0 2px 10px oklch(0.85 0.16 200 / 0.7)" }} />}
-                    <Icon className={`h-5 w-5 transition-transform ${active ? "scale-110" : ""}`} />
-                    <span className="text-[11px] font-semibold">{t.label}</span>
+                    <Icon className={`h-6 w-6 ${active ? "fill-brand/20" : ""}`} />
+                    <span className="text-[10px] font-black uppercase tracking-tight">{t.label}</span>
+                    {active && <span className="absolute -bottom-2 h-1 w-6 rounded-t-full bg-brand" />}
                   </Link>
                 </li>
               );

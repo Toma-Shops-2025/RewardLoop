@@ -16,13 +16,14 @@ export async function initAds(): Promise<void> {
   if (!isNative()) return;
 
   const startInit = () => {
-    if (window.unityads) {
+    if (window.unityads && typeof window.unityads.initialize === 'function') {
       window.unityads.initialize(UNITY_GAME_ID, false, () => {
         console.log("✅ Unity Ads Ready - RewardLoop");
-        // Pre-load units immediately
-        window.unityads.load("Rewarded_Android");
-        window.unityads.load("Interstitial_Android");
-        window.unityads.load("Banner_Android");
+        if (typeof window.unityads.load === 'function') {
+            window.unityads.load("Rewarded_Android");
+            window.unityads.load("Interstitial_Android");
+            window.unityads.load("Banner_Android");
+        }
       });
     }
   };
@@ -39,7 +40,7 @@ export async function showRewardedAd(): Promise<{ success: boolean }> {
   }
 
   return new Promise((resolve) => {
-    if (!window.unityads) {
+    if (!window.unityads || typeof window.unityads.show !== 'function') {
       toast.error("Ad Engine starting... try again in 5 seconds");
       initAds();
       resolve({ success: false });
@@ -47,8 +48,9 @@ export async function showRewardedAd(): Promise<{ success: boolean }> {
     }
 
     window.unityads.show("Rewarded_Android", (res: any) => {
-      // Reload next ad immediately
-      window.unityads.load("Rewarded_Android");
+      if (typeof window.unityads.load === 'function') {
+          window.unityads.load("Rewarded_Android");
+      }
 
       if (res === "COMPLETED") {
         resolve({ success: true });
@@ -66,19 +68,35 @@ export async function showRewardedAdWithFallback(): Promise<{ success: boolean }
 
 /** Show an interstitial */
 export async function showInterstitial(): Promise<void> {
-    if (!isNative() || !window.unityads) return;
+    if (!isNative() || !window.unityads || typeof window.unityads.show !== 'function') return;
+
     window.unityads.show("Interstitial_Android", () => {
-        window.unityads.load("Interstitial_Android");
+        if (typeof window.unityads.load === 'function') {
+            window.unityads.load("Interstitial_Android");
+        }
     });
 }
 
 /** Banner control */
 export function setBannerVisible(visible: boolean): void {
     if (!isNative() || !window.unityads) return;
-    if (visible) {
-        window.unityads.showBanner("Banner_Android", 1); // 1 = Bottom
-    } else {
-        window.unityads.hideBanner();
+
+    try {
+        if (visible) {
+            if (typeof window.unityads.showBanner === 'function') {
+                window.unityads.showBanner("Banner_Android", 1); // 1 = Bottom
+            } else if (typeof window.unityads.showBannerAd === 'function') {
+                window.unityads.showBannerAd("Banner_Android", 1);
+            }
+        } else {
+            if (typeof window.unityads.hideBanner === 'function') {
+                window.unityads.hideBanner();
+            } else if (typeof window.unityads.hideBannerAd === 'function') {
+                window.unityads.hideBannerAd();
+            }
+        }
+    } catch (e) {
+        console.error("Banner Ad Error:", e);
     }
 }
 

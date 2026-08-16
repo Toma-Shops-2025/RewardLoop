@@ -4,10 +4,7 @@ import { showBannerAd, hideBannerAd } from "@/lib/ads";
 
 /**
  * Sponsored banner ad slot.
- * - On native (Android via Capacitor): mounts a real AdMob adaptive banner
- *   anchored to the bottom of the screen while this component is on screen.
- * - On web (Lovable preview, local dev): renders a clearly-labeled,
- *   non-clickable placeholder so layout is reserved.
+ * On native Android, shows a Unity Ads banner while this component is mounted.
  */
 export function AdSlot({ label = "Sponsored" }: { label?: string }) {
   useEffect(() => {

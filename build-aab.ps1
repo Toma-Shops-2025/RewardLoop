@@ -1,14 +1,76 @@
 # RewardLoop - Build signed AAB for Google Play
-# Usage: cd Desktop\rewardloop ; .\build-aab.ps1
+# Usage: cd Desktop\RewardLoop ; .\build-aab.ps1
 
-$ProjectPath  = "$env:USERPROFILE\Desktop\rewardloop"
-$KeystorePath = "$env:USERPROFILE\Downloads\Other DO NOT REMOVE\rewardloopAAB"
+$ProjectPath  = "$env:USERPROFILE\Desktop\RewardLoop"
+$KeystoreDir  = "$env:USERPROFILE\Downloads\Other DO NOT REMOVE"
 $KeyAlias     = "rewardloop1"
+$Keytool      = "keytool"
 
-# We remove "Stop" so that minor warnings don't kill the whole build
-$ErrorActionPreference = "Continue"
+$ErrorActionPreference = "Stop"
 
 function Step($msg) { Write-Host "`n==> $msg" -ForegroundColor Cyan }
+
+function Test-KeystoreAlias([string]$StorePath, [string]$StorePass, [string]$Alias) {
+    $null = & $Keytool -list -keystore $StorePath -storepass $StorePass -alias $Alias 2>&1
+    return $LASTEXITCODE -eq 0
+}
+
+function Show-KeystoreAliases([string]$StorePath, [string]$StorePass) {
+    Write-Host "    Aliases in this keystore:" -ForegroundColor Yellow
+    & $Keytool -list -keystore $StorePath -storepass $StorePass 2>&1 | ForEach-Object { Write-Host "      $_" }
+}
+
+Step "Keystore credentials (validated before the long build)"
+$storePassSecure = Read-Host "Keystore password" -AsSecureString
+$keyPassSecure   = Read-Host "Key password (Enter to reuse keystore password)" -AsSecureString
+
+$storePass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($storePassSecure))
+$keyPass   = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($keyPassSecure))
+if ([string]::IsNullOrEmpty($keyPass)) { $keyPass = $storePass }
+
+$candidates = @(
+    "$KeystoreDir\rewardloopAAB",
+    "$KeystoreDir\rewardloop1",
+    "$KeystoreDir\keystore"
+) | Where-Object { Test-Path $_ }
+
+if ($candidates.Count -eq 0) {
+    Write-Error "No keystore found. Expected one of: rewardloopAAB, rewardloop1, or keystore in:`n  $KeystoreDir"
+    exit 1
+}
+
+$KeystorePath = $null
+$aliasCandidates = @($KeyAlias, "rewardloop", "key0", "upload")
+
+foreach ($candidate in $candidates) {
+    $null = & $Keytool -list -keystore $candidate -storepass $storePass 2>&1
+    if ($LASTEXITCODE -ne 0) { continue }
+
+    foreach ($alias in $aliasCandidates) {
+        if (Test-KeystoreAlias $candidate $storePass $alias) {
+            $KeystorePath = $candidate
+            $KeyAlias = $alias
+            break
+        }
+    }
+    if ($KeystorePath) { break }
+
+    Write-Host "    Password works for: $candidate" -ForegroundColor Yellow
+    Show-KeystoreAliases $candidate $storePass
+}
+
+if (-not $KeystorePath) {
+    Write-Host "`n  SIGNING FAILED: keystore password or alias is wrong." -ForegroundColor Red
+    Write-Host "  Checked files:" -ForegroundColor Red
+    $candidates | ForEach-Object { Write-Host "    $_" -ForegroundColor Red }
+    Write-Host "  Tried aliases: $($aliasCandidates -join ', ')" -ForegroundColor Red
+    Write-Host "  Tip: This is the key you used for the FIRST RewardLoop Play Store upload." -ForegroundColor Yellow
+    Write-Host "  If you lost it, use Play Console -> Setup -> App signing -> request upload key reset.`n" -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "    Using keystore: $KeystorePath" -ForegroundColor Green
+Write-Host "    Using alias:    $KeyAlias" -ForegroundColor Green
 
 Step "Switching to project: $ProjectPath"
 Set-Location $ProjectPath
@@ -46,30 +108,14 @@ if ($content -match 'versionCode\s+(\d+)') {
     Write-Host "    versionCode: $old -> $new" -ForegroundColor Green
 }
 
-Step "Keystore credentials (typing is hidden)"
-$storePassSecure = Read-Host "Keystore password" -AsSecureString
-$keyPassSecure   = Read-Host "Key password (Enter to reuse keystore password)" -AsSecureString
-
-$storePass = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($storePassSecure))
-$keyPass   = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($keyPassSecure))
-if ([string]::IsNullOrEmpty($keyPass)) { $keyPass = $storePass }
-
-if (-not (Test-Path $KeystorePath)) {
-    Write-Error "Keystore not found at: $KeystorePath"
-    exit 1
-}
-
 Step "Building signed release AAB"
 Set-Location "$ProjectPath\android"
 
-# We ignore errors on --stop and clean to ensure they don't block the main build
 & .\gradlew.bat --stop 2>$null
 & .\gradlew.bat clean 2>$null
 
 $aab = "$ProjectPath\android\app\build\outputs\bundle\release\app-release.aab"
-if (Test-Path $aab) {
-    Remove-Item $aab -Force
-}
+if (Test-Path $aab) { Remove-Item $aab -Force }
 
 $gradleArgs = @(
     "bundleRelease",

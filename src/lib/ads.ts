@@ -1,104 +1,119 @@
-// RewardLoop - High Reliability Ad Engine
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { toast } from "sonner";
 
+interface UnityAdsPlugin {
+  initialize(): Promise<{ success: boolean; error?: string }>;
+  showRewarded(): Promise<{ success: boolean; rewarded?: boolean; error?: string }>;
+  showInterstitial(): Promise<void>;
+  showBanner(): Promise<void>;
+  hideBanner(): Promise<void>;
+}
+
+const UnityAds = registerPlugin<UnityAdsPlugin>("UnityAds");
+
 const isNative = () => Capacitor.isNativePlatform();
-const UNITY_GAME_ID = "6168867";
 
-declare global {
-  interface Window {
-    unityads?: any;
-  }
-}
+let initialized = false;
+let initPromise: Promise<boolean> | null = null;
 
-/** Initialize and Load Ads */
-export async function initAds(): Promise<void> {
-  if (!isNative()) return;
+async function ensureInitialized(): Promise<boolean> {
+  if (!isNative()) return false;
+  if (initialized) return true;
 
-  const startInit = () => {
-    if (window.unityads && typeof window.unityads.initialize === 'function') {
-      window.unityads.initialize(UNITY_GAME_ID, false, () => {
-        console.log("✅ Unity Ads Ready - RewardLoop");
-        if (typeof window.unityads.load === 'function') {
-            window.unityads.load("Rewarded_Android");
-            window.unityads.load("Interstitial_Android");
-            window.unityads.load("Banner_Android");
+  if (!initPromise) {
+    initPromise = (async () => {
+      try {
+        const result = await UnityAds.initialize();
+        if (result?.success) {
+          initialized = true;
+          console.log("Unity Ads initialized successfully");
+          return true;
         }
-      });
-    }
-  };
+        console.error("Unity Ads initialization failed:", result?.error);
+        return false;
+      } catch (error) {
+        console.error("Unity Ads initialization error:", error);
+        return false;
+      } finally {
+        if (!initialized) {
+          initPromise = null;
+        }
+      }
+    })();
+  }
 
-  if (window.unityads) startInit();
-  else document.addEventListener("deviceready", startInit, { once: true });
+  return initPromise;
 }
 
-/** Show a rewarded ad with Auto-Reload */
+export async function initAds(): Promise<void> {
+  await ensureInitialized();
+}
+
 export async function showRewardedAd(): Promise<{ success: boolean }> {
   if (!isNative()) {
     toast.info("Simulating Ad...");
     return { success: true };
   }
 
-  return new Promise((resolve) => {
-    if (!window.unityads || typeof window.unityads.show !== 'function') {
-      toast.error("Ad Engine starting... try again in 5 seconds");
-      initAds();
-      resolve({ success: false });
-      return;
+  try {
+    const ready = await ensureInitialized();
+    if (!ready) {
+      toast.error("Ads not ready yet");
+      return { success: false };
     }
 
-    window.unityads.show("Rewarded_Android", (res: any) => {
-      if (typeof window.unityads.load === 'function') {
-          window.unityads.load("Rewarded_Android");
-      }
+    const result = await UnityAds.showRewarded();
 
-      if (res === "COMPLETED") {
-        resolve({ success: true });
-      } else {
-        toast.error("Video skipped - no points earned");
-        resolve({ success: false });
-      }
-    });
-  });
+    if (result?.success && result?.rewarded) {
+      return { success: true };
+    }
+
+    toast.error("Video not completed - no points earned");
+    return { success: false };
+  } catch (error) {
+    console.error("Rewarded ad error:", error);
+    toast.error("Rewarded ad unavailable");
+    return { success: false };
+  }
 }
 
 export async function showRewardedAdWithFallback(): Promise<{ success: boolean }> {
-    return showRewardedAd();
+  return showRewardedAd();
 }
 
-/** Show an interstitial */
 export async function showInterstitial(): Promise<void> {
-    if (!isNative() || !window.unityads || typeof window.unityads.show !== 'function') return;
+  if (!isNative()) return;
 
-    window.unityads.show("Interstitial_Android", () => {
-        if (typeof window.unityads.load === 'function') {
-            window.unityads.load("Interstitial_Android");
-        }
-    });
+  try {
+    const ready = await ensureInitialized();
+    if (!ready) return;
+    await UnityAds.showInterstitial();
+  } catch (error) {
+    console.error("Interstitial ad error:", error);
+  }
 }
 
-/** Banner control */
-export function setBannerVisible(visible: boolean): void {
-    if (!isNative() || !window.unityads) return;
+export async function setBannerVisible(visible: boolean): Promise<void> {
+  if (!isNative()) return;
 
-    try {
-        if (visible) {
-            if (typeof window.unityads.showBanner === 'function') {
-                window.unityads.showBanner("Banner_Android", 1); // 1 = Bottom
-            } else if (typeof window.unityads.showBannerAd === 'function') {
-                window.unityads.showBannerAd("Banner_Android", 1);
-            }
-        } else {
-            if (typeof window.unityads.hideBanner === 'function') {
-                window.unityads.hideBanner();
-            } else if (typeof window.unityads.hideBannerAd === 'function') {
-                window.unityads.hideBannerAd();
-            }
-        }
-    } catch (e) {
-        console.error("Banner Ad Error:", e);
+  try {
+    const ready = await ensureInitialized();
+    if (!ready) return;
+
+    if (visible) {
+      await UnityAds.showBanner();
+    } else {
+      await UnityAds.hideBanner();
     }
+  } catch (error) {
+    console.error("Banner ad error:", error);
+  }
 }
 
-export async function showBannerAd(): Promise<void> { setBannerVisible(true); }
-export async function hideBannerAd(): Promise<void> { setBannerVisible(false); }
+export async function showBannerAd(): Promise<void> {
+  await setBannerVisible(true);
+}
+
+export async function hideBannerAd(): Promise<void> {
+  await setBannerVisible(false);
+}

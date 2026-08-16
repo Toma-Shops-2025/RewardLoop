@@ -13,7 +13,6 @@
     "assets:generate": "npx @capacitor/assets generate --android"
   },
   "dependencies": {
-    "@capacitor-community/admob": "^8.0.0",
     "@capacitor/android": "^8.3.4",
     "@capacitor/app": "^8.1.0",
     "@capacitor/browser": "^8.0.3",
@@ -62,8 +61,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "cordova-plugin-applovin-max": "^2.1.0",
-    "cordova-plugin-unityads": "^0.1.0",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",

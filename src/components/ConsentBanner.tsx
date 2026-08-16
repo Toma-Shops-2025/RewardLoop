@@ -12,9 +12,8 @@ type Choice = "accepted" | "essential";
 const HIDDEN_ROUTES = ["/login", "/signup", "/onboarding"];
 
 /**
- * Lightweight ad / analytics consent banner. AdMob's UMP SDK takes over on
- * native builds; this web banner satisfies the equivalent obligation in the
- * preview / PWA context and records the choice for audit.
+ * Lightweight ad / analytics consent banner for the web app.
+ * Native Android builds rely on Unity Ads and platform privacy settings.
  */
 export function ConsentBanner() {
   const [show, setShow] = useState(false);
@@ -22,8 +21,7 @@ export function ConsentBanner() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Never render this banner inside the native app — AdMob UMP handles
-    // consent there, and a web overlay can interfere with form input.
+    // Never render this banner inside the native app.
     if (isNativeApp()) return;
     if (HIDDEN_ROUTES.some((r) => pathname.startsWith(r))) return;
     if (!localStorage.getItem(LS_KEY)) setShow(true);
@@ -59,8 +57,8 @@ export function ConsentBanner() {
         <h2 className="font-extrabold text-sm">Your privacy choices</h2>
         <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
           We use cookies and device identifiers to keep you signed in, prevent
-          fraud, and (with your consent) show personalized ads through Google
-          AdMob. You can change this any time in Profile → Privacy.
+          fraud, and (with your consent) show personalized ads through Unity
+          Ads. You can change this any time in Profile → Privacy.
         </p>
         <div className="mt-3 flex gap-2">
           <button

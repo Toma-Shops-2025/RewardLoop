@@ -12,7 +12,7 @@ const collected = [
 ];
 
 const shared = [
-  { label: "Google AdMob", purpose: "Serving ads and measuring performance" },
+  { label: "Unity Ads", purpose: "Serving optional ads and measuring performance" },
   { label: "Supabase (our backend)", purpose: "Authentication and data storage" },
   { label: "Gift card fulfillment partners", purpose: "Delivering redemption codes" },
 ];

@@ -15,7 +15,7 @@ function Page() {
         <li>Account info: name, email, password (hashed).</li>
         <li>Engagement data: missions completed, points earned, streaks, referrals.</li>
         <li>Device/usage: device type, app version, anonymized analytics.</li>
-        <li>Ad-related identifiers used by our advertising partners (e.g., Google AdMob) consistent with their policies.</li>
+        <li>Ad-related identifiers used by Unity Ads consistent with their policies.</li>
       </ul>
 
       <h3 className="font-bold mt-4">How we use information</h3>
@@ -27,7 +27,7 @@ function Page() {
       </ul>
 
       <h3 className="font-bold mt-4">Advertising partners</h3>
-      <p>We use third-party ad networks including Google AdMob. These partners may collect device identifiers and ad-interaction data subject to their privacy policies.</p>
+      <p>We use Unity Ads for optional rewarded, interstitial, and banner advertisements. Unity may collect device identifiers and ad-interaction data subject to their privacy policy.</p>
 
       <h3 className="font-bold mt-4">Data retention</h3>
       <p>We retain account and engagement data for as long as your account is active. You may request deletion by contacting support.</p>

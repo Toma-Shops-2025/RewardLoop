@@ -28,7 +28,7 @@ const sections = [
   {
     icon: Wallet,
     title: "Gift card redemption",
-    body: "Reach the 3,000-point minimum, choose a gift card brand (Amazon, Visa, Google Play, Apple, Steam, Starbucks), and enter your email. We review each request and email the gift card code, typically within 2 business days.",
+    body: "Reach the 10,000-point minimum, choose a gift card brand (Amazon, Visa, Google Play, Apple, Steam, Starbucks), and enter your email. We review each request and email the gift card code, typically within 2 business days.",
   },
   {
     icon: AlertCircle,

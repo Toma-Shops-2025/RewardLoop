@@ -6,7 +6,7 @@ function Page() {
   return (
     <article className="space-y-4 text-sm leading-relaxed text-foreground">
       <h2 className="text-xl font-extrabold">Ad Disclosure</h2>
-      <p>RewardLoop displays advertising provided by third-party ad networks, including Google AdMob. Advertising revenue is what funds the optional reward points users may earn through engagement.</p>
+      <p>RewardLoop displays optional advertising through Unity Ads. Ad revenue helps fund reward points users may earn when they choose to engage.</p>
       <ul className="list-disc pl-5 space-y-1">
         <li>Sponsored slots are clearly labeled "Sponsored" and never disguised as content or claim buttons.</li>
         <li>Rewarded ads are always opt-in. We never auto-play interstitials on app open.</li>

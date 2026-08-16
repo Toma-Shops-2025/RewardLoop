@@ -6,8 +6,6 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { useEffect } from "react";
-import { initAds } from "@/lib/ads";
 
 import appCss from "../styles.css?url";
 import { ConsentBanner } from "@/components/ConsentBanner";
@@ -70,10 +68,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 function RootComponent() {
-  useEffect(() => {
-    initAds();
-  }, []);
-
   return (
     <>
       <Outlet />

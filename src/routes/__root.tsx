@@ -6,6 +6,7 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+import { useEffect, useRef, useCallback } from "react";
 
 import appCss from "../styles.css?url";
 import { ConsentBanner } from "@/components/ConsentBanner";
@@ -67,9 +68,42 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+function LoopingBgm() {
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
+
+  const startBgm = useCallback(() => {
+    if (!bgmRef.current) {
+      const audio = new Audio("/audio/promo.mp3");
+      audio.loop = true;
+      audio.volume = 0.15;
+      bgmRef.current = audio;
+    }
+    bgmRef.current.play().catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    startBgm();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") startBgm();
+    };
+    const onFirstGesture = () => startBgm();
+    window.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pointerdown", onFirstGesture, { once: true });
+    window.addEventListener("touchstart", onFirstGesture, { once: true, passive: true });
+    return () => {
+      window.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pointerdown", onFirstGesture);
+      window.removeEventListener("touchstart", onFirstGesture);
+    };
+  }, [startBgm]);
+
+  return null;
+}
+
 function RootComponent() {
   return (
     <>
+      <LoopingBgm />
       <Outlet />
       <ConsentBanner />
       <Toaster richColors position="top-center" />

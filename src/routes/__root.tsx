@@ -4,12 +4,15 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { useEffect, useRef, useCallback } from "react";
 
 import appCss from "../styles.css?url";
 import { ConsentBanner } from "@/components/ConsentBanner";
+import { VolumeBar } from "@/components/VolumeBar";
+import { registerBgm, unregisterBgm, applyVolumeToAll, DEFAULT_VOLUME } from "@/lib/bgm-control";
 
 function NotFoundComponent() {
   return (
@@ -75,8 +78,11 @@ function LoopingBgm() {
     if (!bgmRef.current) {
       const audio = new Audio("/audio/promo.mp3");
       audio.loop = true;
-      audio.volume = 0.15;
+      audio.volume = DEFAULT_VOLUME;
+      registerBgm(audio);
       bgmRef.current = audio;
+    } else {
+      applyVolumeToAll();
     }
     bgmRef.current.play().catch(() => undefined);
   }, []);
@@ -94,6 +100,11 @@ function LoopingBgm() {
       window.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("pointerdown", onFirstGesture);
       window.removeEventListener("touchstart", onFirstGesture);
+      if (bgmRef.current) {
+        unregisterBgm(bgmRef.current);
+        bgmRef.current.pause();
+        bgmRef.current = null;
+      }
     };
   }, [startBgm]);
 
@@ -101,10 +112,14 @@ function LoopingBgm() {
 }
 
 function RootComponent() {
+  const location = useLocation();
+  const inAppShell = location.pathname.startsWith("/app");
+
   return (
     <>
       <LoopingBgm />
       <Outlet />
+      {!inAppShell && <VolumeBar className="bottom-4" />}
       <ConsentBanner />
       <Toaster richColors position="top-center" />
     </>

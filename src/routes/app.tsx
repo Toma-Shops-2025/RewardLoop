@@ -6,6 +6,7 @@ import { showInterstitial, setBannerVisible } from "@/lib/ads";
 import { supabase } from "@/integrations/supabase/client";
 import { AppContext } from "@/lib/app-context";
 import logo from "@/assets/rewardloop-logo.png";
+import { VolumeBar } from "@/components/VolumeBar";
 
 export const Route = createFileRoute("/app")({ component: AppLayout });
 
@@ -94,6 +95,8 @@ function AppLayout() {
             <Outlet />
           </div>
         </main>
+
+        <VolumeBar className="bottom-[5.25rem]" />
 
         <nav
           className="fixed bottom-0 inset-x-0 bg-card/95 backdrop-blur-xl border-t border-border card-shadow z-30"

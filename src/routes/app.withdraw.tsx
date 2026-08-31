@@ -1,34 +1,28 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Clock, X, Info, Gift } from "lucide-react";
+import { Clock, Wallet, CreditCard, Lock } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useApp } from "@/lib/app-context";
 import { supabase } from "@/integrations/supabase/client";
 import { sendTransactionalEmail } from "@/lib/email/send";
-import { z } from "zod";
 
 export const Route = createFileRoute("/app/withdraw")({ component: Withdraw });
 
 const FEE_RATE = 0.02;
-const MIN_POINTS = 10000;
-const POINTS_PER_USD = 1000; // 1,000 pts ≈ $1 gift card value
+const POINTS_PER_USD = 1000;
 
-const GIFT_CARDS = [
-  { id: "amazon", label: "Amazon", emoji: "🛒", note: "Most regions" },
-  { id: "visa", label: "Visa Prepaid", emoji: "💳", note: "Use anywhere Visa is accepted" },
-  { id: "google_play", label: "Google Play", emoji: "▶️", note: "Apps, games, books" },
-  { id: "apple", label: "Apple", emoji: "", note: "App Store & iTunes" },
-  { id: "steam", label: "Steam", emoji: "🎮", note: "PC games & in-game items" },
-  { id: "starbucks", label: "Starbucks", emoji: "", note: "Selected regions" },
-] as const;
-
-const TIERS = [10000, 15000, 25000, 50000];
-
-const formSchema = z.object({
-  brand: z.enum(["amazon", "visa", "google_play", "apple", "steam", "starbucks"]),
-  email: z.string().trim().email("Please enter a valid email address").max(255),
-  amount: z.number().int().min(MIN_POINTS, `Minimum redemption is ${MIN_POINTS.toLocaleString()} points`),
-});
+const REWARDS = [
+  { id: "v5", name: "$5 Visa Card", ptsCost: 5_000, brand: "visa" as const, type: "Visa" as const },
+  { id: "a5", name: "$5 Amazon Gift", ptsCost: 5_000, brand: "amazon" as const, type: "Amazon" as const },
+  { id: "g5", name: "$5 Google Play", ptsCost: 5_000, brand: "google_play" as const, type: "Google" as const },
+  { id: "v10", name: "$10 Visa Card", ptsCost: 10_000, brand: "visa" as const, type: "Visa" as const },
+  { id: "a10", name: "$10 Amazon Gift", ptsCost: 10_000, brand: "amazon" as const, type: "Amazon" as const },
+  { id: "g10", name: "$10 Google Play", ptsCost: 10_000, brand: "google_play" as const, type: "Google" as const },
+  { id: "v25", name: "$25 Visa Card", ptsCost: 25_000, brand: "visa" as const, type: "Visa" as const },
+  { id: "a25", name: "$25 Amazon Gift", ptsCost: 25_000, brand: "amazon" as const, type: "Amazon" as const },
+  { id: "g25", name: "$25 Google Play", ptsCost: 25_000, brand: "google_play" as const, type: "Google" as const },
+];
 
 type W = {
   id: string;
@@ -42,11 +36,9 @@ type W = {
 function Withdraw() {
   const { profile, userId, refresh } = useApp();
   const navigate = useNavigate();
-  const [amount, setAmount] = useState<number>(MIN_POINTS);
-  const [brand, setBrand] = useState<(typeof GIFT_CARDS)[number]["id"]>("amazon");
-  const [email, setEmail] = useState("");
   const [items, setItems] = useState<W[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redeemEmail, setRedeemEmail] = useState("");
 
   const load = async () => {
     const { data } = await supabase
@@ -62,240 +54,190 @@ function Withdraw() {
     if (!userId) return;
     refresh();
     load();
+    setRedeemEmail(profile?.email ?? "");
   }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const balance = profile?.points ?? 0;
-  const fee = Math.ceil(amount * FEE_RATE);
-  const total = amount + fee;
-  const usdValue = useMemo(() => (amount / POINTS_PER_USD).toFixed(2), [amount]);
-  const selectedBrand = GIFT_CARDS.find((g) => g.id === brand)!;
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const parsed = formSchema.safeParse({ brand, email, amount });
-    if (!parsed.success) {
-      return toast.error(parsed.error.issues[0]?.message ?? "Invalid form input");
+  const handleRedeem = async (reward: (typeof REWARDS)[number]) => {
+    const email = redeemEmail.trim();
+    if (!email || !email.includes("@")) {
+      toast.error("Enter a valid email to receive your gift card.");
+      return;
     }
-    if (total > balance) return toast.error("Not enough points (including 2% processing fee)");
-
-    setLoading(true);
-    const { data, error } = await supabase
-      .rpc("request_withdrawal", {
-        p_points: amount,
-        p_brand: brand,
-        p_email: email.trim(),
-      })
-      .single();
-    const wd = data as W | null;
-    setLoading(false);
-    if (error) return toast.error(error.message);
-    toast.success("Redemption request submitted — we'll email you when it's delivered");
-
-    // Fire-and-forget admin alert; don't block the user on email delivery.
-    if (wd?.id) {
-      sendTransactionalEmail({
-        templateName: "new-redemption-alert",
-        idempotencyKey: `redemption-alert-${wd.id}`,
-        templateData: {
-          userName: profile?.name ?? "Player",
-          userEmail: profile?.email ?? null,
-          points: wd.points,
-          giftCardBrand: wd.gift_card_brand,
-          recipientEmail: wd.recipient_email,
-          withdrawalId: wd.id,
-        },
-      }).catch((err) => console.error("Admin alert email failed", err));
+    const fee = Math.ceil(reward.ptsCost * FEE_RATE);
+    const total = reward.ptsCost + fee;
+    if (balance < total) {
+      toast.error(`Need ${total.toLocaleString()} pts (includes 2% fee).`);
+      return;
     }
+    if (!confirm(`Redeem ${reward.name} for ${reward.ptsCost.toLocaleString()} pts?`)) return;
 
-    setEmail("");
-    setAmount(MIN_POINTS);
-    await refresh();
-    await load();
+    setIsRedeeming(true);
+    try {
+      const { data, error } = await supabase
+        .rpc("request_withdrawal", {
+          p_points: reward.ptsCost,
+          p_brand: reward.brand,
+          p_email: email,
+        })
+        .single();
+      const wd = data as W | null;
+      if (error) throw error;
+
+      toast.success("Redemption submitted!", {
+        description: "Gift cards are delivered within 2 business days.",
+      });
+
+      if (wd?.id) {
+        sendTransactionalEmail({
+          templateName: "new-redemption-alert",
+          idempotencyKey: `redemption-alert-${wd.id}`,
+          templateData: {
+            userName: profile?.name ?? "Player",
+            userEmail: profile?.email ?? null,
+            points: wd.points,
+            giftCardBrand: wd.gift_card_brand,
+            recipientEmail: wd.recipient_email,
+            withdrawalId: wd.id,
+          },
+        }).catch((err) => console.error("Admin alert email failed", err));
+      }
+
+      await refresh();
+      await load();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Redemption failed");
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
   return (
-    <div className="bg-background min-h-full">
-      <header className="brand-header px-5 pt-5 pb-10 relative">
+    <div className="bg-background min-h-full pb-8 text-foreground">
+      <header className="px-4 pt-4 pb-2 flex items-center gap-3">
         <Link
           to="/app/withdraw-history"
-          className="absolute left-5 top-5 h-9 w-9 rounded-full border-2 border-brand-foreground/80 flex items-center justify-center text-brand-foreground"
+          className="h-10 w-10 rounded-full bg-white/5 border border-border flex items-center justify-center shrink-0"
           aria-label="History"
         >
-          <Clock className="h-5 w-5" />
+          <Clock className="h-5 w-5 text-brand" />
         </Link>
-        <button
-          onClick={() => navigate({ to: "/app" })}
-          className="absolute right-5 top-5 text-brand-foreground"
-          aria-label="Close"
-        >
-          <X className="h-6 w-6" />
-        </button>
-        <p className="text-center text-brand-foreground/90 text-base font-semibold mt-2">
-          Reward Balance
-        </p>
-        <p className="text-center text-brand-foreground text-5xl font-extrabold tabular-nums mt-1">
-          {balance.toLocaleString()} <span className="text-2xl font-bold">pts</span>
-        </p>
+        <h1 className="text-xl font-black uppercase italic tracking-tighter flex-1 text-center pr-10">
+          THE <span className="text-brand">REWARD VAULT</span>
+        </h1>
       </header>
 
-      <form onSubmit={submit} className="px-5 mt-6 space-y-5 pb-6">
-        <p className="text-center text-muted-foreground font-semibold flex items-center justify-center gap-2">
-          <Gift className="h-4 w-4 text-brand" /> Redeem points for a gift card
-        </p>
-
-        {/* Gift card brand selector */}
-        <div>
-          <label className="block text-sm font-bold mb-2">Choose gift card</label>
-          <div className="grid grid-cols-2 gap-2">
-            {GIFT_CARDS.map((g) => {
-              const active = brand === g.id;
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => setBrand(g.id)}
-                  className={`text-left rounded-xl p-3 border-2 transition card-shadow ${
-                    active
-                      ? "border-brand bg-brand/10"
-                      : "border-border bg-card"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl" aria-hidden>{g.emoji}</span>
-                    <span className="font-bold text-sm">{g.label}</span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{g.note}</p>
-                </button>
-              );
-            })}
+      <div className="px-4">
+        <div className="bg-gradient-to-br from-[#1a1208] to-black border border-brand/20 rounded-[2rem] p-8 text-center shadow-2xl relative overflow-hidden mb-6">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <Wallet className="w-24 h-24 rotate-12 text-brand" />
           </div>
-        </div>
-
-        {/* Amount tiers */}
-        <div>
-          <label className="block text-sm font-bold mb-2">Amount</label>
-          <div className="grid grid-cols-4 gap-2 mb-2">
-            {TIERS.map((t) => {
-              const active = amount === t;
-              const disabled = t > balance;
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => setAmount(t)}
-                  className={`rounded-xl py-2 text-xs font-bold border-2 transition disabled:opacity-40 ${
-                    active ? "border-brand bg-brand text-brand-foreground" : "border-border bg-card text-foreground"
-                  }`}
-                >
-                  {t.toLocaleString()}
-                </button>
-              );
-            })}
-          </div>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={MIN_POINTS}
-            step={100}
-            value={amount || ""}
-            onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))}
-            placeholder={`${MIN_POINTS}`}
-            className="w-full text-center text-3xl font-extrabold tabular-nums bg-card border border-border rounded-xl py-3 outline-none focus:border-brand text-foreground"
-          />
-        </div>
-
-        <div className="bg-card border border-border rounded-xl p-3 text-sm space-y-1">
-          <Row label="Estimated value" value={`~$${usdValue} ${selectedBrand.label} card`} />
-          <Row label="Processing fee (2%)" value={`${fee.toLocaleString()} pts`} />
-          <Row label="Total deducted" value={`${total.toLocaleString()} pts`} bold />
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold mb-2">Recipient email</label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="w-full bg-card border border-border rounded-xl py-3 px-3 outline-none focus:border-brand text-foreground text-sm"
-            maxLength={255}
-          />
-          <p className="text-[11px] text-muted-foreground mt-1">
-            We email the gift card code here once your request is reviewed.
+          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1 italic">
+            Total Reward Balance
+          </p>
+          <p className="text-6xl font-black tracking-tighter tabular-nums italic">
+            {balance.toLocaleString()}
+          </p>
+          <p className="text-[10px] text-brand font-bold mt-2 uppercase tracking-widest">
+            PTS · Redemption Ready
           </p>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading || total > balance || amount < MIN_POINTS}
-          className="block mx-auto pill-btn bg-primary text-primary-foreground px-12 disabled:opacity-60"
-        >
-          {loading ? "Submitting…" : "REDEEM"}
-        </button>
+        <div className="mb-4">
+          <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1 mb-2 italic">
+            Delivery email
+          </label>
+          <input
+            type="email"
+            value={redeemEmail}
+            onChange={(e) => setRedeemEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="w-full bg-card border border-border rounded-xl py-3 px-3 text-sm outline-none focus:border-brand"
+            maxLength={255}
+          />
+        </div>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Minimum redemption: {MIN_POINTS.toLocaleString()} points (~$3). Reviews are typically completed within 2 business days.
-        </p>
+        <div className="space-y-3">
+          <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1 italic">
+            Select Reward
+          </h3>
+          {REWARDS.map((r) => {
+            const fee = Math.ceil(r.ptsCost * FEE_RATE);
+            const total = r.ptsCost + fee;
+            const isUnlocked = balance >= total;
+            const Icon = r.type === "Google" ? Wallet : CreditCard;
+            const iconBg =
+              r.type === "Amazon"
+                ? "bg-orange-600"
+                : r.type === "Google"
+                  ? "bg-emerald-600"
+                  : "bg-brand";
 
-        <Link to="/app/how-rewards" className="flex items-center justify-center gap-2 text-xs text-brand font-semibold">
-          <Info className="h-3.5 w-3.5" /> How rewards work
-        </Link>
-      </form>
-
-      <section className="px-5 pb-10 border-t border-border pt-5">
-        <h2 className="font-bold text-foreground mb-3">Recent Redemptions</h2>
-        {items.length === 0 ? (
-          <p className="text-center text-muted-foreground text-sm py-2">No recent redemptions.</p>
-        ) : (
-          <ul className="space-y-2">
-            {items.map((w) => {
-              const card = GIFT_CARDS.find((g) => g.id === w.gift_card_brand);
-              return (
-                <li
-                  key={w.id}
-                  className="bg-card border border-border rounded-xl p-3 card-shadow text-sm flex justify-between items-start gap-3"
-                >
+            return (
+              <div
+                key={r.id}
+                className={cn(
+                  "rounded-3xl border p-5 flex items-center justify-between transition-all",
+                  isUnlocked ? "border-brand/30 bg-brand/5" : "border-border bg-card/50 opacity-50",
+                )}
+              >
+                <div className="flex items-center gap-4 text-left min-w-0">
+                  <div className={cn("h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center shadow-lg text-white", iconBg)}>
+                    <Icon className="w-6 h-6" />
+                  </div>
                   <div className="min-w-0">
-                    <p className="font-bold">
-                      {w.points.toLocaleString()} pts · {card?.label ?? w.gift_card_brand ?? "Gift card"}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">{w.recipient_email}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      {new Date(w.created_at).toLocaleDateString()}
+                    <h4 className="font-black text-sm uppercase italic truncate">{r.name}</h4>
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase mt-0.5">
+                      {isUnlocked
+                        ? "Ready to claim"
+                        : `Unlock at ${r.ptsCost.toLocaleString()} pts`}
                     </p>
                   </div>
-                  <StatusPill status={w.status} />
+                </div>
+                {isUnlocked ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleRedeem(r)}
+                    disabled={isRedeeming}
+                    className="shrink-0 bg-brand text-brand-foreground text-[10px] font-black px-5 py-2.5 rounded-xl active:scale-95 transition-all italic disabled:opacity-50"
+                  >
+                    {isRedeeming ? "..." : "REDEEM"}
+                  </button>
+                ) : (
+                  <Lock className="w-4 h-4 text-muted-foreground shrink-0 mr-1" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="text-center text-[10px] text-muted-foreground mt-4 px-2">
+          2% processing fee added at checkout · {POINTS_PER_USD.toLocaleString()} pts ≈ $1
+        </p>
+
+        {items.length > 0 && (
+          <section className="mt-8 pt-6 border-t border-border">
+            <h2 className="font-bold text-sm mb-3 uppercase tracking-widest text-muted-foreground">Recent</h2>
+            <ul className="space-y-2">
+              {items.map((w) => (
+                <li key={w.id} className="bg-card border border-border rounded-xl p-3 text-sm flex justify-between gap-2">
+                  <span className="font-bold truncate">{w.points.toLocaleString()} pts · {w.gift_card_brand}</span>
+                  <span className="text-[10px] uppercase text-muted-foreground shrink-0">{w.status}</span>
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          </section>
         )}
-      </section>
-    </div>
-  );
-}
 
-function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
-  return (
-    <div className="flex justify-between items-center">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={bold ? "font-extrabold text-brand" : "font-semibold text-foreground"}>{value}</span>
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/app" })}
+          className="block mx-auto mt-8 text-muted-foreground text-[10px] font-black uppercase tracking-widest underline italic"
+        >
+          Back to Home
+        </button>
+      </div>
     </div>
-  );
-}
-
-function StatusPill({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    pending: "bg-warning text-warning-foreground",
-    paid: "bg-success text-success-foreground",
-    rejected: "bg-destructive text-destructive-foreground",
-  };
-  const label = status === "paid" ? "delivered" : status;
-  return (
-    <span className={`shrink-0 self-start text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${map[status] ?? "bg-muted text-muted-foreground"}`}>
-      {label}
-    </span>
   );
 }

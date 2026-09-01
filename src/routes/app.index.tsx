@@ -277,7 +277,7 @@ function Home() {
           </div>
           <div className="flex-1 text-left">
             <p className="font-bold text-foreground">Reward Wheel</p>
-            <p className="text-sm text-muted-foreground">Spin for up to 100 bonus points</p>
+            <p className="text-sm text-muted-foreground">Spin for up to 15 bonus points</p>
           </div>
           <span className="pill-btn bg-primary text-primary-foreground text-sm py-2 px-4">Spin</span>
         </Link>

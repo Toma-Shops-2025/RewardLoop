@@ -3,8 +3,8 @@ import { useState } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/rewardloop-logo.png";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { isNativeApp, signInWithGoogleNative } from "@/lib/native-auth";
+import { getOAuthRedirectUrl } from "@/lib/oauth-redirect";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({ component: Login });
@@ -43,21 +43,49 @@ function Login() {
 
   const signInWithGoogle = async () => {
     setGoogleLoading(true);
-    if (isNativeApp()) {
-      const { error } = await signInWithGoogleNative();
+    try {
+      if (isNativeApp()) {
+        const { error } = await signInWithGoogleNative();
+        setGoogleLoading(false);
+        if (error) toast.error(error.message ?? "Google sign-in failed");
+        return; // session will be set by deep-link handler
+      }
+      const redirectTo = getOAuthRedirectUrl();
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (error) {
+        setGoogleLoading(false);
+        const msg = error.message ?? "Google sign-in failed";
+        console.error("[google-oauth]", error, { redirectTo });
+        toast.error(
+          /provider|not enabled|unsupported/i.test(msg)
+            ? "Google isn’t enabled yet in Supabase Auth → Providers. Paste your Client ID + Secret and Save."
+            : msg,
+          { duration: 8000 },
+        );
+        return;
+      }
+      if (!data?.url) {
+        setGoogleLoading(false);
+        console.error("[google-oauth] no url returned", { redirectTo, data });
+        toast.error(
+          "Google didn’t return a login URL. In Supabase → Auth → URL Configuration, add: https://rewardloop.fun/#/auth/callback",
+          { duration: 10000 },
+        );
+        return;
+      }
+      // Leave this page for Google — keep Connecting… until navigation completes.
+      window.location.assign(data.url);
+    } catch (e) {
       setGoogleLoading(false);
-      if (error) return toast.error(error.message ?? "Google sign-in failed");
-      return; // session will be set by deep-link handler
+      console.error("[google-oauth] unexpected", e);
+      toast.error(e instanceof Error ? e.message : "Google sign-in failed");
     }
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/app`,
-    });
-    if (result.error) {
-      setGoogleLoading(false);
-      return toast.error(result.error.message ?? "Google sign-in failed");
-    }
-    if (result.redirected) return; // browser navigates away
-    navigate({ to: "/app" });
   };
 
   return (

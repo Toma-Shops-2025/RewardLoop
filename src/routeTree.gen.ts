@@ -27,6 +27,7 @@ import { Route as LegalDeleteAccountRouteImport } from './routes/legal.delete-ac
 import { Route as LegalDataSafetyRouteImport } from './routes/legal.data-safety'
 import { Route as LegalAdDisclosureRouteImport } from './routes/legal.ad-disclosure'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as AppWithdrawHistoryRouteImport } from './routes/app.withdraw-history'
 import { Route as AppWithdrawRouteImport } from './routes/app.withdraw'
 import { Route as AppTriviaRouteImport } from './routes/app.trivia'
@@ -133,6 +134,11 @@ const LegalAdDisclosureRoute = LegalAdDisclosureRouteImport.update({
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWithdrawHistoryRoute = AppWithdrawHistoryRouteImport.update({
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/app/trivia': typeof AppTriviaRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/withdraw-history': typeof AppWithdrawHistoryRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/ad-disclosure': typeof LegalAdDisclosureRoute
   '/legal/data-safety': typeof LegalDataSafetyRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/app/trivia': typeof AppTriviaRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/withdraw-history': typeof AppWithdrawHistoryRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/ad-disclosure': typeof LegalAdDisclosureRoute
   '/legal/data-safety': typeof LegalDataSafetyRoute
@@ -318,6 +326,7 @@ export interface FileRoutesById {
   '/app/trivia': typeof AppTriviaRoute
   '/app/withdraw': typeof AppWithdrawRoute
   '/app/withdraw-history': typeof AppWithdrawHistoryRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/ad-disclosure': typeof LegalAdDisclosureRoute
   '/legal/data-safety': typeof LegalDataSafetyRoute
@@ -357,6 +366,7 @@ export interface FileRouteTypes {
     | '/app/trivia'
     | '/app/withdraw'
     | '/app/withdraw-history'
+    | '/auth/callback'
     | '/email/unsubscribe'
     | '/legal/ad-disclosure'
     | '/legal/data-safety'
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/app/trivia'
     | '/app/withdraw'
     | '/app/withdraw-history'
+    | '/auth/callback'
     | '/email/unsubscribe'
     | '/legal/ad-disclosure'
     | '/legal/data-safety'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/app/trivia'
     | '/app/withdraw'
     | '/app/withdraw-history'
+    | '/auth/callback'
     | '/email/unsubscribe'
     | '/legal/ad-disclosure'
     | '/legal/data-safety'
@@ -455,6 +467,7 @@ export interface RootRouteChildren {
   ShareRoute: typeof ShareRoute
   SignupRoute: typeof SignupRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -588,6 +601,13 @@ declare module '@tanstack/react-router' {
       path: '/email/unsubscribe'
       fullPath: '/email/unsubscribe'
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/withdraw-history': {
@@ -781,6 +801,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShareRoute: ShareRoute,
   SignupRoute: SignupRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,

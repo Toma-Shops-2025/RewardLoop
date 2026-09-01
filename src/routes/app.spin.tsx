@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Clock, Sparkles, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, Sparkles } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-context";
@@ -14,6 +14,9 @@ export const Route = createFileRoute("/app/spin")({ component: Spin });
 const SEGMENTS = [2, 5, 3, 10, 2, 15, 5, 8];
 const COOLDOWN_SEC = 30;
 
+/**
+ * Helper to wait for the app to regain focus after an ad.
+ */
 async function waitForReturn() {
     if (!Capacitor.isNativePlatform()) return;
     return new Promise((resolve) => {
@@ -33,6 +36,7 @@ function Spin() {
   const [angle, setAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [lastWin, setLastWin] = useState<number | null>(null);
 
   useEffect(() => { refresh(); }, []);
 
@@ -45,44 +49,51 @@ function Spin() {
   const spin = async () => {
     if (spinning || cooldown > 0) return;
     setSpinning(true);
-    setAngle(prev => prev + 180);
+    setLastWin(null);
 
+    // START VISUAL FEEDBACK (A slow "loading" rotation)
+    const previewAngle = angle + 360 * 2;
+    setAngle(previewAngle);
+
+    toast("Loading sponsor clip...");
     try {
         const ad = await showRewardedAd();
         if (!ad.success) {
+            toast.error("Ad not ready yet. Please try again.");
             setSpinning(false);
             return;
         }
 
+        // WAIT FOR USER TO RETURN FROM AD
         await waitForReturn();
 
         const { data, error } = await supabase.rpc("claim_spin_reward");
         if (error || !data) {
-            toast.error(error?.message ?? "Connection error");
+            toast.error(error?.message ?? "Spin failed. Check connection.");
             setSpinning(false);
             return;
         }
 
-        const spinData = data as { segment?: number; points: number };
-        const reward = spinData.points;
-        const segmentIndex = (typeof spinData.segment === 'number') ? spinData.segment : SEGMENTS.indexOf(reward);
+        const reward = (data as { segment: number; points: number }).points;
+        const idx = SEGMENTS.indexOf(reward);
+        const seg = 360 / SEGMENTS.length;
 
-        const segDeg = 360 / SEGMENTS.length;
-        const currentRotation = angle;
-        const baseSpins = Math.ceil(currentRotation / 360) * 360 + (360 * 6);
-        const segmentOffset = 360 - (segmentIndex * segDeg + (segDeg / 2));
-        const finalAngle = baseSpins + segmentOffset;
-
-        setAngle(finalAngle);
+        // CALCULATE FINAL LANDING (Landing in middle of segment)
+        const base = Math.ceil(previewAngle / 360) * 360 + 360 * 4;
+        const target = base + (360 - (idx * seg + (seg / 2)));
+        setAngle(target);
 
         setTimeout(async () => {
-            fireConfetti(reward >= 15 ? 70 : 30);
-            toast.success(`Won ${reward} points!`);
+            setLastWin(reward);
+            fireConfetti(reward >= 15 ? 60 : 25);
+            toast.success(`🎉 You won ${reward} points!`);
             await refresh();
             setSpinning(false);
             setCooldown(COOLDOWN_SEC);
-        }, 5100);
+        }, 4200);
     } catch (e: any) {
+        console.error(e);
+        toast.error("Something went wrong. Please try again.");
         setSpinning(false);
     }
   };
@@ -90,8 +101,8 @@ function Spin() {
   const VB = 200;
   const C = VB / 2;
   const R_OUTER = 96;
-  const R_INNER = 22;
-  const R_LABEL = 82;
+  const R_INNER = 26;
+  const R_LABEL = 70;
   const segDeg = 360 / SEGMENTS.length;
 
   const wedgePath = (i: number) => {
@@ -108,65 +119,116 @@ function Spin() {
     return `M ${xi1} ${yi1} L ${x1} ${y1} A ${R_OUTER} ${R_OUTER} 0 0 1 ${x2} ${y2} L ${xi2} ${yi2} A ${R_INNER} ${R_INNER} 0 0 0 ${xi1} ${yi1} Z`;
   };
 
-  const WEDGE_COLORS = [ "#3b82f6", "#8b5cf6", "#ec4899", "#f97316", "#06b6d4", "#6366f1", "#10b981", "#eab308" ];
-
   return (
-    <div className="bg-[#020617] min-h-screen pb-12 overflow-hidden flex flex-col text-white">
-      <header className="bg-slate-900 px-5 py-6 flex items-center gap-3 shadow-2xl border-b border-white/5">
-        <button onClick={() => navigate({ to: "/app" })} className="text-white"><ArrowLeft className="h-6 w-6" /></button>
+    <div className="bg-background min-h-full pb-12">
+      <header className="brand-header px-5 py-5 flex items-center gap-3">
+        <button onClick={() => navigate({ to: "/app" })} aria-label="Back" className="text-brand-foreground"><ArrowLeft className="h-6 w-6" /></button>
         <div className="flex-1 text-center">
-          <h1 className="text-xl font-black text-white uppercase tracking-tighter">Reward Wheel</h1>
+          <h1 className="text-xl font-bold text-brand-foreground">Reward Wheel</h1>
+          <p className="text-brand-foreground/80 text-xs mt-0.5 tabular-nums">Balance: {(profile?.points ?? 0).toLocaleString()} pts</p>
         </div>
         <div className="w-6" />
       </header>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
-          <div className="mx-auto rounded-[3.5rem] p-10 bg-slate-950 border-4 border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] relative scale-110">
-            <div className="relative mx-auto h-72 w-72">
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-30 drop-shadow-2xl">
-                <svg width="48" height="48" viewBox="0 0 48 48">
-                  <path d="M24 40 L6 8 L42 8 Z" fill="white" stroke="#000" strokeWidth="2" />
-                </svg>
-              </div>
-
-              <div
-                className="absolute inset-0 rounded-full"
-                style={{
-                  transform: `rotate(${angle}deg)`,
-                  transition: spinning ? "transform 5s cubic-bezier(0.2, 0, 0.1, 1)" : "none",
-                }}
-              >
-                <svg viewBox={`0 0 ${VB} ${VB}`} className="w-full h-full">
-                  {SEGMENTS.map((p, i) => (
-                    <path key={`w${i}`} d={wedgePath(i)} fill={WEDGE_COLORS[i]} stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
-                  ))}
-                  {SEGMENTS.map((p, i) => {
-                    const midDeg = i * segDeg + segDeg / 2;
-                    return (
-                      <g key={`t${i}`} transform={`rotate(${midDeg} ${C} ${C}) translate(${C} ${C - R_LABEL})`}>
-                        <text x="0" y="0" textAnchor="middle" dominantBaseline="middle" fill="white" style={{ fontSize: 20, fontWeight: 900, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' }}>
-                          {p}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-
-              <div className="absolute inset-0 m-auto h-16 w-16 rounded-full flex items-center justify-center z-10 bg-white shadow-2xl border-4 border-slate-950">
-                <Sparkles className="h-6 w-6 text-[#f97316]" />
-              </div>
-            </div>
+      <div className="neon-stage mx-4 mt-6 rounded-3xl p-6 border border-white/5">
+        <div className="relative mx-auto h-72 w-72">
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 pointer-bob">
+            <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden>
+              <defs>
+                <linearGradient id="ptr" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="oklch(0.85 0.16 200)" />
+                  <stop offset="100%" stopColor="oklch(0.78 0.19 55)" />
+                </linearGradient>
+              </defs>
+              <path d="M18 30 L4 6 L32 6 Z" fill="url(#ptr)"
+                style={{ filter: "drop-shadow(0 0 6px oklch(0.85 0.16 200 / 0.9))" }} />
+            </svg>
           </div>
 
-          <div className="w-full max-w-sm px-6 mt-16 text-center">
-            <button onClick={spin} disabled={spinning || cooldown > 0}
-              className="w-full bg-white text-black py-6 rounded-full font-black uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all disabled:opacity-40 text-xl"
-            >
-              {spinning ? "Spinning..." : cooldown > 0 ? `Wait ${cooldown}s` : "SPIN NOW"}
-            </button>
-            <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-6 italic">1 Video Ad = 1 Spin</p>
+          <div className="absolute inset-0 rounded-full neon-pulse" />
+
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              transform: `rotate(${angle}deg)`,
+              transition: spinning ? "transform 4s cubic-bezier(0.17, 0.67, 0.18, 1)" : "transform 0.5s ease-out",
+            }}
+          >
+            <svg viewBox={`0 0 ${VB} ${VB}`} className="w-full h-full">
+              <defs>
+                <radialGradient id="rim" cx="50%" cy="50%" r="50%">
+                  <stop offset="92%" stopColor="oklch(0.30 0.05 270)" />
+                  <stop offset="100%" stopColor="oklch(0.10 0.05 270)" />
+                </radialGradient>
+              </defs>
+              <circle cx={C} cy={C} r={R_OUTER + 3} fill="url(#rim)" />
+              <circle cx={C} cy={C} r={R_OUTER + 1} fill="none"
+                stroke="oklch(0.85 0.16 200)" strokeWidth="0.6" opacity="0.85" />
+              {SEGMENTS.map((p, i) => (
+                <path
+                  key={`w${i}`}
+                  d={wedgePath(i)}
+                  fill={i % 2 === 0 ? "var(--wheel-segment-a)" : "var(--wheel-segment-b)"}
+                  stroke={i % 2 === 0 ? "oklch(0.78 0.19 55 / 0.9)" : "oklch(0.85 0.16 200 / 0.9)"}
+                  strokeWidth="0.8"
+                />
+              ))}
+              {SEGMENTS.map((p, i) => {
+                const midDeg = i * segDeg + segDeg / 2;
+                return (
+                  <g key={`t${i}`} transform={`rotate(${midDeg} ${C} ${C}) translate(${C} ${C - R_LABEL})`}>
+                    <text
+                      x="0"
+                      y="0"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      className="neon-text"
+                      style={{ fontSize: 16, fontWeight: 900, fontFamily: "ui-sans-serif, system-ui" }}
+                    >
+                      {p}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
           </div>
+
+          <div className="absolute inset-0 m-auto h-14 w-14 rounded-full flex items-center justify-center z-10"
+            style={{
+              background: "radial-gradient(circle at 30% 30%, oklch(0.30 0.05 270), oklch(0.12 0.05 270))",
+              boxShadow: "0 0 18px oklch(0.85 0.16 200 / 0.6), inset 0 0 0 1.5px oklch(0.85 0.16 200 / 0.7)",
+            }}>
+            <Sparkles className="h-6 w-6" style={{ color: "oklch(0.85 0.16 200)" }} />
+          </div>
+        </div>
+
+        {lastWin !== null && !spinning && (
+          <div className="mx-auto mt-5 text-center reward-pop">
+            <p className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-bold">You won</p>
+            <p className="inline-block mt-1 px-4 py-1.5 rounded-full text-2xl font-extrabold text-white"
+              style={{
+                background: "var(--gradient-neon)",
+                boxShadow: "0 0 20px oklch(0.85 0.16 200 / 0.6)",
+              }}>
+              +{lastWin} PTS
+            </p>
+          </div>
+        )}
+
+        <p className="text-center text-[10px] uppercase tracking-[0.2em] text-white/50 mt-4">All values in points</p>
+      </div>
+
+      <div className="px-6 mt-6">
+        <button onClick={spin} disabled={spinning || cooldown > 0}
+          className="pill-btn w-full text-lg text-white disabled:opacity-60 flex items-center justify-center gap-2"
+          style={{
+            background: (spinning || cooldown > 0) ? "oklch(0.30 0.03 265)" : "var(--gradient-neon)",
+            boxShadow: (spinning || cooldown > 0) ? "none" : "0 0 24px oklch(0.85 0.16 200 / 0.55)",
+          }}>
+          {spinning ? "Spinning…" : cooldown > 0 ? (<><Clock className="h-5 w-5" /> Wait {cooldown}s</>) : "SPIN NOW"}
+        </button>
+        <p className="text-center text-xs text-muted-foreground mt-3">A short sponsored clip plays before the spin.</p>
+        <p className="text-center text-[11px] text-muted-foreground mt-1">Reward values may vary. Every spin grants points — no losses.</p>
       </div>
     </div>
   );

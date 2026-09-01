@@ -3,8 +3,8 @@ import { useState } from "react";
 import { X, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { isNativeApp, signInWithGoogleNative } from "@/lib/native-auth";
+import { getOAuthRedirectUrl } from "@/lib/oauth-redirect";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({ component: Signup });
@@ -56,18 +56,29 @@ function Signup() {
       if (error) return toast.error(error.message ?? "Google sign-in failed");
       return; // session will be set by deep-link handler
     }
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/app`,
-      extraParams: form.referral.trim()
-        ? { state: `ref=${form.referral.trim().toUpperCase()}` }
-        : undefined,
+    const redirectTo = getOAuthRedirectUrl();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+      },
     });
-    if (result.error) {
+    if (error) {
       setGoogleLoading(false);
-      return toast.error(result.error.message ?? "Google sign-in failed");
+      toast.error(
+        error.message?.toLowerCase().includes("provider") || error.message?.toLowerCase().includes("not enabled")
+          ? "Google sign-in isn’t configured yet. Enable Google in Supabase Auth → Providers."
+          : (error.message ?? "Google sign-in failed"),
+      );
+      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/app" });
+    if (!data?.url) {
+      setGoogleLoading(false);
+      toast.error("Could not start Google sign-in. Check Supabase redirect URLs.");
+      return;
+    }
+    window.location.assign(data.url);
   };
 
   return (

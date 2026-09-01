@@ -5,6 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { router, queryClient } from './router'
 import './styles.css'
 import { initAds } from './lib/ads'
+import { exchangeOAuthCodeFromUrl } from './lib/oauth-redirect'
 
 // Pre-initialize ads as early as possible
 try {
@@ -15,8 +16,10 @@ try {
 
 const rootElement = document.getElementById('root')
 
-if (rootElement) {
-  if (!rootElement.innerHTML) {
+async function mount() {
+  await exchangeOAuthCodeFromUrl().catch((err) => console.error("[oauth] bootstrap failed", err));
+
+  if (rootElement && !rootElement.innerHTML) {
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
         <QueryClientProvider client={queryClient}>
@@ -26,3 +29,5 @@ if (rootElement) {
     )
   }
 }
+
+void mount();

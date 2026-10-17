@@ -11,10 +11,14 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: true,
   },
   plugins: {
+    SystemBars: {
+      insetsHandling: "css",
+      initialViewportFitValueHint: "cover",
+    },
     Keyboard: {
       resize: "native",
-      resizeOnFullScreen: true,
-    }
+      resizeOnFullScreen: false,
+    },
   },
 };
 

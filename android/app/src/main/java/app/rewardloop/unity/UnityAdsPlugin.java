@@ -42,6 +42,16 @@ public class UnityAdsPlugin extends Plugin {
     private static final String TAG = "UnityAdsPlugin";
     private static final String GAME_ID = "6168867";
 
+    private static volatile boolean fullscreenAdShowing = false;
+
+    public static boolean isFullscreenAdShowing() {
+        return fullscreenAdShowing;
+    }
+
+    private static void setFullscreenAdShowing(boolean showing) {
+        fullscreenAdShowing = showing;
+    }
+
     private static final String REWARDED_ID = "Rewarded_Android";
     private static final String INTERSTITIAL_ID = "Interstitial_Android";
     private static final String BANNER_ID = "Banner_Android";
@@ -147,7 +157,9 @@ public class UnityAdsPlugin extends Plugin {
 
                     adToShow.show(activity, config, new RewardedShowListener() {
                         @Override
-                        public void onStarted(RewardedAd ad) {}
+                        public void onStarted(RewardedAd ad) {
+                            setFullscreenAdShowing(true);
+                        }
 
                         @Override
                         public void onClicked(RewardedAd ad) {}
@@ -160,6 +172,7 @@ public class UnityAdsPlugin extends Plugin {
 
                         @Override
                         public void onCompleted(RewardedAd ad, ShowFinishState state) {
+                            setFullscreenAdShowing(false);
                             boolean rewarded =
                                     earnedReward[0] || state == ShowFinishState.COMPLETED;
                             resolveRewarded(call, resolved, rewarded, null);
@@ -168,6 +181,7 @@ public class UnityAdsPlugin extends Plugin {
 
                         @Override
                         public void onFailed(RewardedAd ad, UnityAdsError error) {
+                            setFullscreenAdShowing(false);
                             resolveRewarded(call, resolved, false, errorMessage(error));
                             loadRewarded();
                         }
@@ -244,19 +258,23 @@ public class UnityAdsPlugin extends Plugin {
 
                     adToShow.show(activity, config, new InterstitialShowListener() {
                         @Override
-                        public void onStarted(InterstitialAd ad) {}
+                        public void onStarted(InterstitialAd ad) {
+                            setFullscreenAdShowing(true);
+                        }
 
                         @Override
                         public void onClicked(InterstitialAd ad) {}
 
                         @Override
                         public void onCompleted(InterstitialAd ad, ShowFinishState state) {
+                            setFullscreenAdShowing(false);
                             loadInterstitial();
                             call.resolve();
                         }
 
                         @Override
                         public void onFailed(InterstitialAd ad, UnityAdsError error) {
+                            setFullscreenAdShowing(false);
                             Log.e(TAG, "Interstitial show failed: " + errorMessage(error));
                             loadInterstitial();
                             call.resolve();
